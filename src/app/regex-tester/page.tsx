@@ -55,7 +55,7 @@ export default function RegexTesterPage() {
         <label htmlFor='regex-text' className='mt-5 block font-semibold'>Test text</label><textarea id='regex-text' value={text} onChange={e => setText(e.target.value)} className='mt-2 h-40 w-full rounded border p-3 font-mono'/>
         <div aria-live='polite' className='mt-4'>{running ? <p className='text-sm text-slate-500'>Testing safely...</p> : error ? <p className='text-red-600'>{error}</p> : <><p className='text-sm text-slate-600'>{matches.length} match{matches.length === 1 ? '' : 'es'} in {time.toFixed(3)} ms</p>{matches.slice(0, 100).map((m, i) => <pre key={`${m.index}-${i}`} className='mt-2 overflow-auto rounded bg-emerald-50 p-3 text-sm'>{JSON.stringify(m, null, 2)}</pre>)}{matches.length > 100 && <p className='mt-2 text-sm text-slate-500'>Showing the first 100 matches.</p>}</>}</div>
       </section>
-      <section className='rounded-xl bg-white p-6 shadow'><h2 className='font-semibold'>Basic explanation</h2><div className='mt-3 space-y-1 font-mono text-sm'>{explanation.map((x, i) => <div key={i}>{x}</div>)}</div><p className='mt-4 text-xs text-slate-500'>The explainer is intentionally lightweight; the tester itself uses the browser's JavaScript RegExp engine.</p></section>
+      <section className='rounded-xl bg-white p-6 shadow'><h2 className='font-semibold'>Basic explanation</h2><div className='mt-3 space-y-1 font-mono text-sm'>{explanation.map((x, i) => <div key={i}>{x}</div>)}</div><p className='mt-4 text-xs text-slate-500'>The explainer is intentionally lightweight; the tester itself uses the JavaScript RegExp engine built into the browser.</p></section>
     </div>
   </LocalToolLayout>;
 }
