@@ -1,8 +1,8 @@
 import { readdir, readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = fileURLToPath(new URL('../src/app/', import.meta.url));
+const root = fileURLToPath(new URL('../src/', import.meta.url));
 const banned = [
   /\bfetch\s*\(/,
   /\bXMLHttpRequest\b/,
@@ -19,9 +19,7 @@ async function walk(path) {
       await walk(full);
       continue;
     }
-
     if (!/\.(ts|tsx|js|jsx)$/.test(entry.name)) continue;
-
     const text = await readFile(full, 'utf8');
     for (const rule of banned) {
       if (rule.test(text)) violations.push(`${full}: ${rule}`);
@@ -30,12 +28,8 @@ async function walk(path) {
 }
 
 await walk(root);
-
 if (violations.length) {
-  console.error(
-    'Privacy check failed. Tool code contains network-capable APIs:\n' + violations.join('\n')
-  );
+  console.error('Privacy check failed. Source code contains network-capable APIs:\n' + violations.join('\n'));
   process.exit(1);
 }
-
-console.log('Privacy check passed: no network APIs found in src/app tool code.');
+console.log('Privacy check passed: no direct network APIs found in src/.');
