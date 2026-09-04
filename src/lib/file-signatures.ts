@@ -35,8 +35,7 @@ const MATCHERS: Matcher[] = [
 export function detectFileSignature(bytes: Uint8Array): SignatureInfo | null {
   const found = MATCHERS.find(item => item.match(bytes));
   if (!found) return null;
-  const { match: _match, ...info } = found;
-  return info;
+  return { name: found.name, mime: found.mime, extensions: found.extensions, container: found.container };
 }
 
 export function fileExtension(name: string) {
