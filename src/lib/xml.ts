@@ -1,6 +1,6 @@
 export const escapeXml = (value: unknown) => String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 export const xmlName = (name: string, index = 0) => {
-  const cleaned = name.trim().replace(/[^A-Za-z0-9_.-]/g, '_').replace(/^[^A-Za-z_]+/, '');
+  const cleaned = name.trim().replace(/^[^A-Za-z_]+/, '').replace(/[^A-Za-z0-9_.-]/g, '_');
   return cleaned || `field_${index + 1}`;
 };
 export function formatXml(xml: string) {
