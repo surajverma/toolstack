@@ -1,117 +1,14 @@
-// src/app/markdown-editor/page.tsx
 'use client';
-
-import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import showdown from 'showdown';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import LocalToolLayout from '@/components/LocalToolLayout';
 
-const SAMPLE_MARKDOWN = `# Welcome to the Markdown Editor!
+const SAMPLE='# Welcome to the Markdown Editor!\n\nThis preview renders **Markdown** locally. Raw HTML is escaped for safety.\n\n- No upload\n- Live preview\n- Copy generated HTML';
+const escapeRawHtml=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-This is a **live preview** of your Markdown text.
-
-## Features
-- Real-time rendering
-- Supports all standard Markdown syntax
-- HTML output copying
-
-### Example Code Block
-\`\`\`javascript
-function greet(name) {
-  return "Hello, " + name + "!";
-}
-\`\`\`
-
-> This is a blockquote. Feel free to edit this text and see what happens!
-`;
-
-export default function MarkdownEditorPage() {
-  const [markdown, setMarkdown] = useState(SAMPLE_MARKDOWN);
-  const [copySuccess, setCopySuccess] = useState('');
-
-  const converter = useMemo(
-    () =>
-      new showdown.Converter({
-        tables: true,
-        simplifiedAutoLink: true,
-        strikethrough: true,
-        tasklists: true,
-      }),
-    []
-  );
-
-  const html = useMemo(() => converter.makeHtml(markdown), [markdown, converter]);
-
-  const handleCopyHtml = () => {
-    navigator.clipboard.writeText(html).then(
-      () => {
-        setCopySuccess('HTML copied to clipboard!');
-        setTimeout(() => setCopySuccess(''), 2000); // Clear message after 2 seconds
-      },
-      (err) => {
-        setCopySuccess('Failed to copy HTML.');
-        console.error('Could not copy text: ', err);
-      }
-    );
-  };
-
-  return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
-      <Navbar />
-      <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
-        <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>Markdown Editor</h1>
-          <p className='text-lg text-slate-600 mt-1'>
-            Type Markdown on the left and see the rendered HTML on the right.
-          </p>
-        </header>
-
-        <section className='grid grid-cols-1 md:grid-cols-2 gap-4 h-[60vh] max-w-7xl mx-auto'>
-          {/* Markdown Input */}
-          <div className='flex flex-col'>
-            <div className='flex-shrink-0 flex justify-between items-center bg-slate-100 p-2 border border-b-0 rounded-t-lg'>
-              <h2 className='font-semibold text-slate-700'>Markdown</h2>
-            </div>
-            <textarea
-              value={markdown}
-              onChange={(e) => setMarkdown(e.target.value)}
-              className='w-full h-full p-4 border border-slate-300 rounded-b-lg font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out resize-none'
-              placeholder='Type your Markdown here...'
-            />
-          </div>
-
-          {/* HTML Preview */}
-          <div className='flex flex-col'>
-            <div className='flex-shrink-0 flex justify-between items-center bg-slate-100 p-2 border border-b-0 rounded-t-lg'>
-              <h2 className='font-semibold text-slate-700'>Preview</h2>
-              <button
-                onClick={handleCopyHtml}
-                className='px-3 py-1 text-xs font-medium text-slate-600 bg-white rounded-md border border-slate-300 hover:bg-slate-50'>
-                Copy HTML
-              </button>
-            </div>
-            {copySuccess && (
-              <p className='absolute right-10 mt-14 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-md shadow-lg'>
-                {copySuccess}
-              </p>
-            )}
-            <div
-              className='w-full h-full p-4 bg-white border border-slate-300 rounded-b-lg overflow-y-auto prose max-w-none'
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
-          </div>
-        </section>
-
-        <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
-            &larr; Back to All Tools
-          </Link>
-        </div>
-      </main>
-      <Footer />
-    </div>
-  );
+export default function MarkdownEditorPage(){
+ const [markdown,setMarkdown]=useState(SAMPLE);
+ const converter=useMemo(()=>new showdown.Converter({tables:true,simplifiedAutoLink:true,strikethrough:true,tasklists:true}),[]);
+ const html=useMemo(()=>converter.makeHtml(escapeRawHtml(markdown)),[markdown,converter]);
+ return <LocalToolLayout title='Markdown Editor' description='Edit Markdown locally with a live preview. Raw HTML is escaped before rendering to keep pasted content from executing scripts.'><section className='mx-auto grid max-w-7xl gap-4 md:grid-cols-2'><div className='flex min-h-[60vh] flex-col'><h2 className='rounded-t border bg-slate-100 p-2 font-semibold'>Markdown</h2><textarea value={markdown} onChange={e=>setMarkdown(e.target.value)} className='min-h-0 flex-1 rounded-b border p-4 font-mono'/></div><div className='flex min-h-[60vh] flex-col'><div className='flex items-center justify-between rounded-t border bg-slate-100 p-2'><h2 className='font-semibold'>Preview</h2><button onClick={()=>navigator.clipboard.writeText(html)} className='rounded border bg-white px-3 py-1 text-xs'>Copy HTML</button></div><div className='prose max-w-none min-h-0 flex-1 overflow-auto rounded-b border bg-white p-4' dangerouslySetInnerHTML={{__html:html}}/></div></section></LocalToolLayout>;
 }
