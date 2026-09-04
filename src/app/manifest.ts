@@ -1,0 +1,2 @@
+import type { MetadataRoute } from 'next';
+export default function manifest(): MetadataRoute.Manifest { return { name: 'ToolStack', short_name: 'ToolStack', description: 'Privacy-first browser tools that process working data locally.', start_url: '/', display: 'standalone', background_color: '#f8fafc', theme_color: '#0284c7', icons: [{ src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] }; }

@@ -1,0 +1,8 @@
+'use client';
+import { useMemo, useState } from 'react';
+import LocalToolLayout from '@/components/LocalToolLayout';
+import { explainCron } from '@/lib/cron';
+export default function CronExplainerPage() {
+  const [expression, setExpression] = useState('*/15 9-17 * * 1-5'); const result = useMemo(() => { try { return { rows: explainCron(expression), error: '' }; } catch (err) { return { rows: [], error: (err as Error).message }; } }, [expression]);
+  return <LocalToolLayout title='Cron Expression Explainer' description='Explain standard five-field cron expressions locally. This tool intentionally does not assume Quartz or platform-specific seconds fields.'><section className='mx-auto max-w-3xl rounded-xl bg-white p-6 shadow'><label className='font-semibold'>Cron expression<input value={expression} onChange={event => setExpression(event.target.value)} className='mt-2 w-full rounded border p-3 font-mono text-lg'/></label><p className='mt-2 text-xs text-slate-500'>minute · hour · day of month · month · day of week</p>{result.error ? <p className='mt-5 rounded bg-red-50 p-3 text-red-700'>{result.error}</p> : <div className='mt-6 space-y-3'>{result.rows.map(row => <div key={row.field} className='grid gap-1 rounded border p-3 sm:grid-cols-[9rem_7rem_1fr]'><strong className='capitalize'>{row.field}</strong><code>{row.raw}</code><span className='text-slate-600'>{row.explanation}</span></div>)}</div>}<div className='mt-6 rounded bg-slate-50 p-4 text-sm text-slate-600'>Supported syntax: `*`, `*/step`, numeric values, numeric ranges, and comma-separated combinations.</div></section></LocalToolLayout>;
+}

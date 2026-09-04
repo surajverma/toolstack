@@ -1,250 +1,87 @@
-// src/app/data-anonymizer/page.tsx
 'use client';
+import { useEffect, useMemo, useState } from 'react';
+import LocalToolLayout from '@/components/LocalToolLayout';
+import { runRegexReplace } from '@/lib/regex-worker';
 
-import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import Breadcrumbs from '@/components/Breadcrumbs';
+const SAMPLE_TEXT = `From: user@example.com\nUser 550e8400-e29b-41d4-a716-446655440000 with IP 192.168.1.1 accessed the server.\nDevice: 00:1A:2B:3C:4D:5E\nFor support, call +1 (555) 123-4567.\nCard: 4111 1111 1111 1111\nProject ID: PROJ-12345`;
 
-const SAMPLE_TEXT = `From: user@example.com
-To: another.user@gmail.com
-Date: 2025-06-07
-Log Entry:
-User with IP 192.168.1.1 accessed the server.
-Later, 10.0.0.2 made a request.
-For support, call +1 (555) 123-4567.
-My card number is 4444-5555-6666-7777.
-Project ID: PROJ-12345`;
+const RULES = {
+  email: { label: 'Email addresses', regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, replacement: '[REDACTED_EMAIL]' },
+  phone: { label: 'Phone numbers (common NANP formats)', regex: /(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g, replacement: '[REDACTED_PHONE]' },
+  ipv4: { label: 'IPv4 addresses', regex: /(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d?\d)/g, replacement: '[REDACTED_IP]' },
+  uuid: { label: 'UUIDs', regex: /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi, replacement: '[REDACTED_UUID]' },
+  mac: { label: 'MAC addresses', regex: /\b(?:[0-9A-F]{2}[:-]){5}[0-9A-F]{2}\b/gi, replacement: '[REDACTED_MAC]' },
+} as const;
+type RuleKey = keyof typeof RULES;
+const DEFAULT_ACTIVE: Record<RuleKey, boolean> = { email: true, phone: true, ipv4: true, uuid: true, mac: true };
 
-// Define the types of data we can scrub
-const SCRUBBER_RULES = {
-  email: {
-    label: 'Email Addresses',
-    regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
-    replacement: '[REDACTED_EMAIL]',
-  },
-  phone: {
-    label: 'Phone Numbers',
-    regex: /(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g,
-    replacement: '[REDACTED_PHONE]',
-  },
-  ipv4: {
-    label: 'IPv4 Addresses',
-    regex: /(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/g,
-    replacement: '[REDACTED_IP]',
-  },
-  creditCard: {
-    label: 'Credit Card Numbers',
-    regex: /\b(?:\d[ -]*?){13,16}\b/g,
-    replacement: '[REDACTED_CREDIT_CARD]',
-  },
-};
+function luhn(value: string) {
+  const digits = value.replace(/\D/g, '');
+  if (digits.length < 13 || digits.length > 19) return false;
+  let sum = 0;
+  let double = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let digit = Number(digits[i]);
+    if (double) { digit *= 2; if (digit > 9) digit -= 9; }
+    sum += digit;
+    double = !double;
+  }
+  return sum % 10 === 0;
+}
 
-type ScrubRuleKey = keyof typeof SCRUBBER_RULES;
+function applyStandard(input: string, active: Record<RuleKey, boolean>, cards: boolean) {
+  let output = input;
+  (Object.keys(RULES) as RuleKey[]).forEach(key => { if (active[key]) output = output.replace(RULES[key].regex, RULES[key].replacement); });
+  if (cards) output = output.replace(/\b(?:\d[ -]*?){13,19}\b/g, match => luhn(match) ? '[REDACTED_PAYMENT_CARD]' : match);
+  return output;
+}
+
+function parseCustom(value: string) {
+  if (value.startsWith('/') && value.lastIndexOf('/') > 0) {
+    const end = value.lastIndexOf('/');
+    return { pattern: value.slice(1, end), flags: `g${value.slice(end + 1).replace(/g/g, '')}` };
+  }
+  return { pattern: value, flags: 'g' };
+}
+
+const INITIAL_OUTPUT = applyStandard(SAMPLE_TEXT, DEFAULT_ACTIVE, true).replace(/PROJ-\d+/g, '[PROJECT_ID]');
 
 export default function DataAnonymizerPage() {
-  const [inputText, setInputText] = useState(SAMPLE_TEXT);
-  const [copySuccess, setCopySuccess] = useState('');
-  const [activeRules, setActiveRules] = useState<Record<ScrubRuleKey, boolean>>({
-    email: true,
-    phone: true,
-    ipv4: true,
-    creditCard: true,
-  });
+  const [input, setInput] = useState(SAMPLE_TEXT);
+  const [active, setActive] = useState<Record<RuleKey, boolean>>(DEFAULT_ACTIVE);
+  const [cards, setCards] = useState(true);
+  const [customEnabled, setCustomEnabled] = useState(true);
+  const [customFind, setCustomFind] = useState('PROJ-\\d+');
+  const [customReplace, setCustomReplace] = useState('[PROJECT_ID]');
+  const [output, setOutput] = useState(INITIAL_OUTPUT);
+  const [customError, setCustomError] = useState('');
+  const baseOutput = useMemo(() => applyStandard(input, active, cards), [input, active, cards]);
 
-  const [useCustomRule, setUseCustomRule] = useState(true);
-  const [customFindText, setCustomFindText] = useState('PROJ-\\d+');
-  const [customReplaceText, setCustomReplaceText] = useState('[PROJECT_ID]');
-
-  const outputText = useMemo(() => {
-    let textToScrub = inputText;
-
-    // 1. Apply standard rules first
-    (Object.keys(SCRUBBER_RULES) as ScrubRuleKey[]).forEach((key) => {
-      if (activeRules[key]) {
-        const rule = SCRUBBER_RULES[key];
-        textToScrub = textToScrub.replace(rule.regex, rule.replacement);
-      }
-    });
-
-    // 2. Apply custom rule if enabled
-    if (useCustomRule && customFindText) {
+  useEffect(() => {
+    let cancelled = false;
+    if (!customEnabled || !customFind) return;
+    const timer = window.setTimeout(async () => {
       try {
-        let pattern = customFindText;
-        let flags = 'g'; // Default to global replace
-
-        if (pattern.startsWith('/') && pattern.lastIndexOf('/') > 0) {
-          const lastSlash = pattern.lastIndexOf('/');
-          const providedFlags = pattern.substring(lastSlash + 1);
-          pattern = pattern.substring(1, lastSlash);
-          flags = 'g' + providedFlags.replace('g', '');
-        }
-
-        // --- START: FIX FOR CUSTOM RULE ---
-        // Strip start/end anchors to allow validation patterns to be used for finding.
-        if (flags.includes('g')) {
-          if (pattern.startsWith('^')) {
-            pattern = pattern.substring(1);
-          }
-          if (pattern.endsWith('$') && !pattern.endsWith('\\$')) {
-            pattern = pattern.slice(0, -1);
-          }
-        }
-        // --- END: FIX FOR CUSTOM RULE ---
-
-        const customRegex = new RegExp(pattern, flags);
-        textToScrub = textToScrub.replace(customRegex, customReplaceText);
-      } catch (e) {
-        // Ignore invalid regex in custom rule, or show an error
-        console.error('Invalid custom regex:', e);
+        const { pattern, flags } = parseCustom(customFind);
+        const result = await runRegexReplace(pattern, flags, baseOutput, customReplace);
+        if (!cancelled) { setOutput(result); setCustomError(''); }
+      } catch (err) {
+        if (!cancelled) { setOutput(baseOutput); setCustomError((err as Error).message); }
       }
-    }
+    }, 120);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [baseOutput, customEnabled, customFind, customReplace]);
 
-    return textToScrub;
-  }, [inputText, activeRules, useCustomRule, customFindText, customReplaceText]);
+  const displayedOutput = customEnabled && customFind ? output : baseOutput;
+  const displayedError = customEnabled && customFind ? customError : '';
 
-  const handleRuleChange = (key: ScrubRuleKey) => {
-    setActiveRules((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const handleCopy = () => {
-    if (!outputText) return;
-    navigator.clipboard.writeText(outputText).then(() => {
-      setCopySuccess('Output copied to clipboard!');
-      setTimeout(() => setCopySuccess(''), 2000);
-    });
-  };
-
-  return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
-      <Navbar />
-      <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
-        <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>Data Anonymizer</h1>
-          <p className='text-lg text-slate-600 mt-1'>
-            Find and scrub sensitive information from your text before sharing.
-          </p>
-        </header>
-
-        <section className='grid grid-cols-1 md:grid-cols-2 gap-4 max-w-7xl mx-auto'>
-          {/* Input Area */}
-          <div className='flex flex-col'>
-            <h2 className='font-semibold text-slate-700 bg-slate-100 p-2 border border-b-0 rounded-t-lg'>
-              Original Text
-            </h2>
-            <textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              className='w-full h-80 p-4 border border-slate-300 rounded-b-lg font-mono focus:ring-2 focus:ring-sky-500 resize-none'
-              placeholder='Paste your text with sensitive data here...'
-            />
-          </div>
-          {/* Output Area */}
-          <div className='flex flex-col'>
-            <div className='flex-shrink-0 flex justify-between items-center bg-slate-100 p-2 border border-b-0 rounded-t-lg'>
-              <h2 className='font-semibold text-slate-700'>Scrubbed Text</h2>
-              <button
-                onClick={handleCopy}
-                disabled={!outputText}
-                className='px-3 py-1 text-xs font-medium text-slate-600 bg-white rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50'>
-                Copy
-              </button>
-            </div>
-            <textarea
-              readOnly
-              value={outputText}
-              className='w-full h-80 p-4 border border-slate-300 rounded-b-lg font-mono bg-slate-50 resize-none'
-            />
-            {copySuccess && <p className='text-right text-xs text-green-600 mt-1'>{copySuccess}</p>}
-          </div>
-        </section>
-
-        {/* Controls */}
-        <section className='bg-white p-6 rounded-lg shadow-xl max-w-4xl mx-auto mt-6'>
-          <h3 className='text-lg font-semibold text-slate-800 mb-3'>Scrubbing Rules</h3>
-          <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
-            {(Object.keys(SCRUBBER_RULES) as ScrubRuleKey[]).map((key) => {
-              const rule = SCRUBBER_RULES[key];
-              return (
-                <div key={key} className='relative flex items-start'>
-                  <div className='flex h-6 items-center'>
-                    <input
-                      id={key}
-                      checked={activeRules[key]}
-                      onChange={() => handleRuleChange(key)}
-                      type='checkbox'
-                      className='h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500'
-                    />
-                  </div>
-                  <div className='ml-3 text-sm leading-6'>
-                    <label htmlFor={key} className='font-medium text-gray-900'>
-                      {rule.label}
-                    </label>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* --- START: Custom Rule Section --- */}
-          <div className='mt-6 pt-4 border-t'>
-            <div className='relative flex items-start mb-4'>
-              <div className='flex h-6 items-center'>
-                <input
-                  id='custom-rule-checkbox'
-                  checked={useCustomRule}
-                  onChange={(e) => setUseCustomRule(e.target.checked)}
-                  type='checkbox'
-                  className='h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500'
-                />
-              </div>
-              <div className='ml-3 text-sm leading-6'>
-                <label htmlFor='custom-rule-checkbox' className='font-medium text-gray-900'>
-                  Custom Rule
-                </label>
-              </div>
-            </div>
-            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${!useCustomRule ? 'opacity-50' : ''}`}>
-              <div>
-                <label htmlFor='custom-find' className='block text-sm font-medium text-slate-700'>
-                  Find (Text or /Regex/)
-                </label>
-                <input
-                  type='text'
-                  id='custom-find'
-                  value={customFindText}
-                  onChange={(e) => setCustomFindText(e.target.value)}
-                  disabled={!useCustomRule}
-                  className='mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 disabled:cursor-not-allowed'
-                />
-              </div>
-              <div>
-                <label htmlFor='custom-replace' className='block text-sm font-medium text-slate-700'>
-                  Replace with
-                </label>
-                <input
-                  type='text'
-                  id='custom-replace'
-                  value={customReplaceText}
-                  onChange={(e) => setCustomReplaceText(e.target.value)}
-                  disabled={!useCustomRule}
-                  className='mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 disabled:cursor-not-allowed'
-                />
-              </div>
-            </div>
-          </div>
-          {/* --- END: Custom Rule Section --- */}
-        </section>
-
-        <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
-            &larr; Back to All Tools
-          </Link>
-        </div>
-      </main>
-      <Footer />
+  return <LocalToolLayout title='Data Anonymizer' description='Redact common sensitive-looking values before sharing text. Detection is local and intentionally described as best-effort, not complete PII discovery.'>
+    <div className='mx-auto max-w-7xl space-y-6'>
+      <div className='grid gap-4 md:grid-cols-2'><label className='font-semibold'>Original text<textarea value={input} onChange={e => setInput(e.target.value)} className='mt-2 h-80 w-full rounded border p-4 font-mono'/></label><label className='font-semibold'>Scrubbed text<textarea readOnly value={displayedOutput} className='mt-2 h-80 w-full rounded border bg-slate-50 p-4 font-mono'/></label></div>
+      <section className='rounded-xl bg-white p-6 shadow'><h2 className='text-lg font-semibold'>Detection presets</h2><div className='mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>{(Object.keys(RULES) as RuleKey[]).map(key => <label key={key} className='flex items-start gap-2 text-sm'><input type='checkbox' checked={active[key]} onChange={() => setActive(prev => ({ ...prev, [key]: !prev[key] }))}/><span>{RULES[key].label}</span></label>)}<label className='flex items-start gap-2 text-sm'><input type='checkbox' checked={cards} onChange={e => setCards(e.target.checked)}/><span>Payment-card-like numbers (Luhn-valid only)</span></label></div>
+        <div className='mt-6 border-t pt-5'><label className='flex gap-2 font-medium'><input type='checkbox' checked={customEnabled} onChange={e => setCustomEnabled(e.target.checked)}/>Custom regex rule</label><div className='mt-3 grid gap-3 sm:grid-cols-2'><input aria-label='Custom regex' disabled={!customEnabled} value={customFind} onChange={e => setCustomFind(e.target.value)} className='rounded border p-2 font-mono'/><input aria-label='Custom replacement' disabled={!customEnabled} value={customReplace} onChange={e => setCustomReplace(e.target.value)} className='rounded border p-2 font-mono'/></div>{displayedError && <p className='mt-2 text-sm text-red-600' aria-live='polite'>{displayedError}</p>}</div>
+        <div className='mt-5 flex flex-wrap gap-3'><button onClick={() => navigator.clipboard.writeText(displayedOutput)} className='rounded bg-slate-800 px-4 py-2 text-white'>Copy scrubbed text</button></div><p className='mt-4 text-xs text-slate-500'>False positives and false negatives are possible. Review the result before relying on it.</p>
+      </section>
     </div>
-  );
+  </LocalToolLayout>;
 }

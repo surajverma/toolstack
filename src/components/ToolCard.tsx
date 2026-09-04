@@ -1,33 +1,19 @@
-// src/components/ToolCard.tsx
 import Link from 'next/link';
-import type { Tool } from '@/app/page'; // Or from '@/types'
+import type { Tool } from '@/types/tool';
 
-interface ToolCardProps {
-  tool: Tool;
+interface ToolCardProps { tool: Tool }
+
+export default function ToolCard({ tool }: ToolCardProps) {
+  return <Link href={tool.slug} className='group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500'>
+    <div className='mb-3 flex items-start justify-between gap-3'>
+      <h3 className='text-lg font-bold tracking-tight text-slate-900 group-hover:text-sky-700'>{tool.name}</h3>
+      <div className='flex shrink-0 gap-1'>
+        {tool.new && <span className='rounded-full bg-sky-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700'>New</span>}
+        <span className='rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700'>Local</span>
+      </div>
+    </div>
+    <p className='mb-4 text-sm leading-6 text-slate-600'>{tool.description}</p>
+    <div className='mb-3'><span className='inline-flex rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-700'>{tool.category}</span></div>
+    <div className='flex flex-wrap gap-1.5'>{tool.tags.slice(0,5).map(tag => <span key={tag} className='rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-600'>{tag}</span>)}</div>
+  </Link>;
 }
-
-const ToolCard = ({ tool }: ToolCardProps) => {
-  return (
-    <Link
-      href={tool.slug}
-      className='block p-6 bg-white/90 rounded-2xl shadow-lg hover:shadow-2xl border border-slate-100 hover:border-sky-200 transition-all duration-200 ease-in-out transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50'>
-      {/* You can add an icon here later if you have one */}
-      {/* {tool.icon && <img src={tool.icon} alt={`${tool.name} icon`} className="w-8 h-8 mb-2" />} */}
-
-      <h3 className='text-xl font-extrabold text-slate-800 mb-2 font-heading tracking-tight'>{tool.name}</h3>
-      <p className='text-slate-600 text-base mb-3'>{tool.description}</p>
-
-      {tool.tags && tool.tags.length > 0 && (
-        <div className='flex flex-wrap gap-2 mt-2'>
-          {tool.tags.map((tag) => (
-            <span key={tag} className='text-xs bg-gradient-to-r from-sky-100 to-indigo-100 text-sky-700 px-2 py-1 rounded-full font-medium'>
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-    </Link>
-  );
-};
-
-export default ToolCard;

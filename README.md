@@ -1,86 +1,82 @@
 # ToolStack
-**A privacy-first collection of useful web tools and utilities. All tools run entirely in your browser—your data never leaves your device.**
----
 
-## ✨ Features
+**Privacy-first browser tools. Your working data stays on your device.**
 
-- **Privacy-focused:** All processing happens locally in your browser. No data is sent to any server.
-- **No sign-up, no ads, no tracking.**
-- **Open source:** Contributions welcome!
-- **Modern UI:** Built with Next.js, React, and Tailwind CSS.
+ToolStack is an open-source collection of utilities designed around a strict local-processing rule: files, text and other working input are processed in the browser and are not sent to an application API for processing.
 
----
+## Privacy contract
 
-## 🧰 Available Tools
+- Tool input is processed locally in the browser.
+- No account is required.
+- No advertising or analytics SDK is included.
+- Source code under `src/` is checked for direct network-capable APIs by `npm run privacy-check`.
+- Runtime libraries are bundled with the application rather than loaded from third-party CDNs.
+- Tools that fundamentally require transmitting user input to a third party are intentionally excluded from the core collection.
 
-- **Image Compressor** – Reduce image file sizes quickly and easily.
-- **Regex Tester & Explainer** – Test your regular expressions and get explanations.
-- **Text Diff Checker** – Compare two pieces of text and highlight differences.
-- **Color Code Converter** – Convert HEX, RGB, HSL color codes instantly.
-- **Placeholder Image Generator** – Create custom placeholder images on the fly.
-- **Text Statistics / Analyzer** – Get instant stats on your text, like word count, characters, and more.
-- **Image Metadata Remover** – View and remove EXIF metadata from your JPEG images to protect your privacy.
-- **Markdown Editor** – A simple Markdown editor with a live preview and HTML export.
-- **CSV to JSON/XML Converter** – Convert CSV data into JSON or XML formats.
-- **Text Contrast Checker** – Check if the contrast between two colors meets accessibility standards.
-- **Image Resizer** – Quickly resize images to your specified dimensions, all in your browser.
-- **Image Cropper** – Crop images to your desired dimensions with an easy-to-use interface.
-- **Lorem Ipsum Generator** – Generate placeholder text with options for paragraphs, sentences, or words.
-- **Easy Regex Generator** – Create common regular expressions by building a sentence, no syntax required.
-- **Find & Replace in Text** – Perform a find and replace on a block of text, with optional Regex support.
-- **Data Anonymizer** – Automatically find and scrub sensitive data like emails and IP addresses from text.
-- **CSS Specificity Calculator** – Calculate and understand the specificity of CSS selectors.
-- **Unit Converter** – Convert between various units of measurement.
-- **HTTP Status Code Explainer** – Quickly find and understand the meaning of HTTP status codes.
-- **List Cleaner & Formatter** – Quickly sort, clean, and format lists of text with various options.
-- **HTML Tag Explainer** – A quick reference guide for all standard HTML tags and their uses.
+## Highlights
 
----
+### PDF & Documents
+- PDF Toolkit: merge PDFs, reorder merge inputs, extract/reorder/delete/rotate pages, split every page to ZIP, edit basic metadata and turn images into a PDF.
+- PDF operations run in-browser with bundled `pdf-lib`; ToolStack does not claim secure redaction or general PDF compression.
 
-## 🚀 Getting Started
+### Privacy & Security
+Image Metadata Remover, Data Anonymizer, File Hash & Checksum, Tracking URL Cleaner, Password & Passphrase Generator, JWT Inspector, Browser Privacy Inspector, Text Privacy Cleaner, AES-GCM File Encryption, File Type & Signature Inspector, Content Credentials (C2PA) Inspector, and HMAC Generator & Verifier.
 
-Clone the repo and install dependencies:
+### Images
+Image Compressor, Image Resizer, Image Cropper, Image Format Converter, and Placeholder Image Generator.
+
+### Developer / Data
+JSON Toolbox (including structural diff), Regex Tester & Explainer, Easy Regex Generator, Text Diff Checker, sanitized Markdown Editor, CSV to JSON/XML Converter, XML Toolbox, YAML ↔ JSON Converter, AST-based CSS Specificity Calculator, CSP Builder & Analyzer, Cron Expression Explainer, HTTP Status Code Explainer, HTML Tag Explainer, Encoder / Decoder, and UUID / ULID Generator.
+
+### Text, Accessibility, Converters & Generators
+Text Statistics / Analyzer, Find & Replace, List Cleaner & Formatter, Text Contrast Checker, Color Code Converter, Unit Converter, Timestamp & Date Toolkit, and Lorem Ipsum Generator.
+
+## Offline / PWA behavior
+
+ToolStack registers a same-origin service worker in production. The home page, offline fallback and ToolStack's own static assets are cached, and successfully visited tool pages can be reopened from the cache when offline.
+
+User-selected files, generated files and tool input are **not** deliberately placed into the service-worker cache.
+
+## Development
 
 ```bash
-git clone https://github.com/SurajVerma/my-toolbox.git
-cd my-toolbox
+git clone https://github.com/surajverma/toolstack.git
+cd toolstack
 npm install
+npm run dev
 ```
 
-Start the development server:
+Open `http://localhost:3000`.
+
+`npm run dev` compiles directly from your current source tree. For a production-mode test, build first:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+`npm start` only serves an existing `.next` production build; pulling or switching branches does not rebuild `.next` automatically.
 
----
+Before submitting a change:
 
-## 🛡️ Privacy
+```bash
+npm run verify
+```
 
-All tools work 100% in your browser. No data is ever uploaded or stored remotely. You can use these tools offline after the first load.
+`verify` runs the privacy check, ESLint, TypeScript checking, Vitest unit tests and a production build.
 
----
+## Security and privacy notes
 
-## 🤝 Contributing
+ToolStack's privacy promise concerns the data entered into its tools. Dependencies and the hosting platform still require normal supply-chain and infrastructure maintenance. Security-sensitive tools use browser-standard APIs such as Web Crypto rather than custom cryptographic primitives where possible.
 
-Contributions, bug reports, and suggestions are welcome! Please open an issue or submit a pull request.
+The Content Credentials inspector reads embedded C2PA provenance data locally. It does not fetch external trust lists or claim that every embedded signer is trusted.
 
----
+## Contributing
 
-## 📄 License
+Bug reports, privacy improvements, accessibility fixes and new local-only tools are welcome. A proposed core tool should be able to perform its main function without transmitting the user's input to another service.
 
-MIT. See [LICENSE](LICENSE) for details.
+## License
 
----
+MIT. See [LICENSE](LICENSE).
 
-## 🙏 Thank you
-
-If you like my work, you can [buy me a coffee ☕](https://ko-fi.com/skv)
+If you find ToolStack useful, you can support the project at https://ko-fi.com/skv.
