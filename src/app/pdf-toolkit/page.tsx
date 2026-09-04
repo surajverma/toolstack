@@ -57,7 +57,7 @@ export default function PdfToolkitPage() {
 
   const saveMetadata = async () => {
     const first = files.find(item => !item.error && item.pages > 0); if (!first) return; setBusy(true); setMessage('');
-    try { const doc = await loadPdf(first.file); metadata.title ? doc.setTitle(metadata.title) : undefined; metadata.author ? doc.setAuthor(metadata.author) : undefined; metadata.subject ? doc.setSubject(metadata.subject) : undefined; doc.setKeywords(metadata.keywords.split(',').map(value => value.trim()).filter(Boolean)); doc.setModificationDate(new Date()); downloadBytes(await doc.save(), `${baseName(first.file.name)}-metadata.pdf`); }
+    try { const doc = await loadPdf(first.file); if (metadata.title) doc.setTitle(metadata.title); if (metadata.author) doc.setAuthor(metadata.author); if (metadata.subject) doc.setSubject(metadata.subject); doc.setKeywords(metadata.keywords.split(',').map(value => value.trim()).filter(Boolean)); doc.setModificationDate(new Date()); downloadBytes(await doc.save(), `${baseName(first.file.name)}-metadata.pdf`); }
     catch (err) { setMessage((err as Error).message); } finally { setBusy(false); }
   };
 
