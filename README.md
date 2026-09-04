@@ -15,44 +15,16 @@ ToolStack is an open-source collection of utilities designed around a strict loc
 ## Included tools
 
 ### Privacy & Security
-- Image Metadata Remover
-- Data Anonymizer
-- File Hash & Checksum
-- Tracking URL Cleaner
-- Password & Passphrase Generator
-- JWT Inspector
-- Browser Privacy Inspector
-- Text Privacy Cleaner
+Image Metadata Remover, Data Anonymizer, File Hash & Checksum, Tracking URL Cleaner, Password & Passphrase Generator, JWT Inspector, Browser Privacy Inspector, Text Privacy Cleaner, and AES-GCM File Encryption.
 
 ### Images
-- Image Compressor
-- Image Resizer
-- Image Cropper
-- Image Format Converter
-- Placeholder Image Generator
+Image Compressor, Image Resizer, Image Cropper, Image Format Converter, and Placeholder Image Generator.
 
 ### Developer / Data
-- JSON Toolbox
-- Regex Tester & Explainer
-- Easy Regex Generator
-- Text Diff Checker
-- Markdown Editor
-- CSV to JSON/XML Converter
-- CSS Specificity Calculator
-- HTTP Status Code Explainer
-- HTML Tag Explainer
-- Encoder / Decoder
-- UUID / ULID Generator
+JSON Toolbox, Regex Tester & Explainer, Easy Regex Generator, Text Diff Checker, Markdown Editor, CSV to JSON/XML Converter, CSS Specificity Calculator, HTTP Status Code Explainer, HTML Tag Explainer, Encoder / Decoder, and UUID / ULID Generator.
 
 ### Text, Accessibility, Converters & Generators
-- Text Statistics / Analyzer
-- Find & Replace
-- List Cleaner & Formatter
-- Text Contrast Checker
-- Color Code Converter
-- Unit Converter
-- Timestamp & Date Toolkit
-- Lorem Ipsum Generator
+Text Statistics / Analyzer, Find & Replace, List Cleaner & Formatter, Text Contrast Checker, Color Code Converter, Unit Converter, Timestamp & Date Toolkit, and Lorem Ipsum Generator.
 
 ## Development
 
@@ -65,6 +37,8 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+For production SEO, set `NEXT_PUBLIC_SITE_URL` to the deployed site's absolute origin before building.
+
 Before submitting a change:
 
 ```bash
@@ -75,7 +49,7 @@ npm run verify
 
 ## Security and privacy notes
 
-ToolStack's privacy promise concerns the data entered into its tools. Dependencies and the hosting platform still need normal supply-chain and infrastructure maintenance. Security-sensitive tools should prefer browser-standard cryptographic APIs such as Web Crypto rather than custom cryptography.
+ToolStack's privacy promise concerns the data entered into its tools. Dependencies and the hosting platform still need normal supply-chain and infrastructure maintenance. Security-sensitive tools prefer browser-standard cryptographic APIs such as Web Crypto rather than custom cryptography.
 
 ## Contributing
 
