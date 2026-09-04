@@ -1,5 +1,4 @@
 'use client';
-
 import { useMemo, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -10,47 +9,18 @@ import { TOOLS, TOOL_CATEGORIES } from '@/config/tools';
 import type { ToolCategory } from '@/types/tool';
 
 export default function HomePage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [category, setCategory] = useState<ToolCategory | null>(null);
-
-  const filteredTools = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    return TOOLS.filter((tool) => {
-      const categoryMatch = !category || tool.category === category;
-      const searchMatch = !q || tool.name.toLowerCase().includes(q) || tool.description.toLowerCase().includes(q) || tool.tags.some((tag) => tag.toLowerCase().includes(q));
-      return categoryMatch && searchMatch;
-    });
-  }, [searchTerm, category]);
-
-  return (
-    <div className='flex min-h-screen flex-col bg-slate-50'>
-      <Navbar />
-      <main className='container mx-auto flex-grow px-4 py-8'>
-        <header className='mb-8 text-center'>
-          <h1 className='bg-gradient-to-r from-sky-500 to-indigo-600 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent'>ToolStack</h1>
-          <p className='mx-auto mt-3 max-w-3xl text-xl font-medium text-slate-600'>Useful browser tools with a simple rule: your working data stays on your device.</p>
-          <div className='mt-5'><PrivacyBadge /></div>
-        </header>
-
-        <section className='mb-8'><SearchBar onSearch={setSearchTerm} /></section>
-
-        <section className='mb-10 rounded-xl bg-white p-5 shadow-sm' aria-label='Tool categories'>
-          <div className='flex flex-wrap justify-center gap-2'>
-            <button onClick={() => setCategory(null)} className={`rounded-full px-4 py-2 text-sm font-medium ${category===null?'bg-sky-600 text-white':'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>All</button>
-            {TOOL_CATEGORIES.map((item) => <button key={item} onClick={() => setCategory(item)} className={`rounded-full px-4 py-2 text-sm font-medium ${category===item?'bg-sky-600 text-white':'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>{item}</button>)}
-          </div>
-        </section>
-
-        <section>
-          <div className='mb-5 flex flex-wrap items-baseline justify-between gap-2'>
-            <h2 className='text-2xl font-semibold text-slate-700'>{category ?? 'All Tools'}</h2>
-            <span className='text-sm text-slate-500'>{filteredTools.length} tool{filteredTools.length===1?'':'s'}</span>
-          </div>
-          <ToolList tools={filteredTools} />
-          {filteredTools.length===0 && <div className='rounded-lg bg-white p-8 text-center shadow'><p className='text-slate-500'>No tools found matching your search.</p></div>}
-        </section>
-      </main>
-      <Footer />
-    </div>
-  );
+  const [searchTerm, setSearchTerm] = useState(''); const [category, setCategory] = useState<ToolCategory | null>(null); const [tag, setTag] = useState<string | null>(null);
+  const topTags = useMemo(() => { const counts = new Map<string, number>(); TOOLS.forEach(tool => tool.tags.forEach(value => counts.set(value, (counts.get(value) ?? 0) + 1))); return [...counts.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0,14).map(([value]) => value); }, []);
+  const q = searchTerm.trim().toLowerCase(); const filtered = useMemo(() => TOOLS.filter(tool => (!category || tool.category === category) && (!tag || tool.tags.includes(tag)) && (!q || tool.name.toLowerCase().includes(q) || tool.description.toLowerCase().includes(q) || tool.tags.some(value => value.toLowerCase().includes(q)))), [category, tag, q]);
+  const featured = useMemo(() => TOOLS.filter(tool => tool.featured).slice(0,6), []); const newest = useMemo(() => TOOLS.filter(tool => tool.new).slice(-8).reverse(), []); const browsingAll = !category && !tag && !q;
+  const clearFilters = () => { setCategory(null); setTag(null); setSearchTerm(''); };
+  return <div className='flex min-h-screen flex-col bg-slate-50'><Navbar/><main className='container mx-auto flex-grow px-4 py-10'>
+    <header className='mx-auto mb-10 max-w-4xl text-center'><h1 className='text-5xl font-extrabold tracking-tight text-slate-950'>Tool<span className='text-sky-600'>Stack</span></h1><p className='mx-auto mt-4 max-w-3xl text-xl font-medium text-slate-600'>Useful tools with one simple privacy rule: your working data stays on your device.</p><div className='mt-5'><PrivacyBadge/></div></header>
+    <section className='mx-auto mb-8 max-w-4xl'><SearchBar onSearch={setSearchTerm}/></section>
+    <section className='mb-8 grid gap-3 sm:grid-cols-3'><div className='rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center'><strong className='text-emerald-900'>No uploads</strong><p className='mt-1 text-sm text-emerald-800'>Files and text are processed in the browser.</p></div><div className='rounded-xl border border-sky-100 bg-sky-50 p-4 text-center'><strong className='text-sky-900'>No account or tracking</strong><p className='mt-1 text-sm text-sky-800'>No sign-in is required to use the utilities.</p></div><div className='rounded-xl border border-slate-200 bg-white p-4 text-center'><strong className='text-slate-900'>Offline-friendly</strong><p className='mt-1 text-sm text-slate-600'>Previously visited tools can reopen from the PWA cache.</p></div></section>
+    <section className='mb-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm' aria-label='Tool categories'><div className='flex flex-wrap justify-center gap-2'><button onClick={() => { setCategory(null); setTag(null); }} className={`rounded-full px-4 py-2 text-sm font-semibold ${category === null && tag === null ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>All</button>{TOOL_CATEGORIES.map(item => <button key={item} onClick={() => { setCategory(item); setTag(null); }} className={`rounded-full px-4 py-2 text-sm font-semibold ${category === item ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>{item}</button>)}</div></section>
+    <section className='mb-10'><div className='mb-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500'>Quick tag filters</div><div className='flex flex-wrap justify-center gap-2'>{topTags.map(value => <button key={value} onClick={() => { setTag(tag === value ? null : value); setCategory(null); }} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${tag === value ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300'}`}>{value}</button>)}</div></section>
+    {browsingAll && <><section className='mb-12'><div className='mb-5 flex items-baseline justify-between'><h2 className='text-2xl font-bold text-slate-900'>Featured privacy tools</h2><span className='text-sm text-slate-500'>Good places to start</span></div><ToolList tools={featured}/></section><section className='mb-12'><div className='mb-5 flex items-baseline justify-between'><h2 className='text-2xl font-bold text-slate-900'>New tools</h2><span className='text-sm text-slate-500'>{newest.length} recent additions</span></div><ToolList tools={newest}/></section></>}
+    <section><div className='mb-5 flex flex-wrap items-baseline justify-between gap-2'><h2 className='text-2xl font-bold text-slate-900'>{browsingAll ? 'All tools' : category ?? (tag ? `Tag: ${tag}` : 'Search results')}</h2><div className='flex items-center gap-3'><span className='text-sm text-slate-500'>{filtered.length} tool{filtered.length === 1 ? '' : 's'}</span>{!browsingAll && <button onClick={clearFilters} className='text-sm font-semibold text-sky-700 hover:underline'>Clear filters</button>}</div></div><ToolList tools={filtered}/>{filtered.length === 0 && <div className='rounded-lg bg-white p-8 text-center shadow'><p className='text-slate-500'>No tools found matching your search.</p></div>}</section>
+  </main><Footer/></div>;
 }
