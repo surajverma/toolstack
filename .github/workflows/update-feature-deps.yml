@@ -1,0 +1,31 @@
+name: Update feature dependencies
+on:
+  push:
+    branches: [feature/privacy-toolstack-refresh]
+    paths:
+      - '.github/workflows/update-feature-deps.yml'
+permissions:
+  contents: write
+jobs:
+  update-dependencies:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/privacy-toolstack-refresh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm install pdf-lib@1.17.1 dompurify@3.4.14 postcss-selector-parser@7.1.6 yaml@2.9.0 @contentauth/c2pa-web@0.14.4
+      - run: npm install --save-dev vitest@4.1.11
+      - name: Commit generated dependency files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Add bundled local-processing dependencies"
+            git push origin HEAD:feature/privacy-toolstack-refresh
+          fi
