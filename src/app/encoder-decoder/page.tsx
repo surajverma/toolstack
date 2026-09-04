@@ -1,0 +1,10 @@
+'use client';
+import { useMemo, useState } from 'react';
+import LocalToolLayout from '@/components/LocalToolLayout';
+
+type Mode='base64-encode'|'base64-decode'|'url-encode'|'url-decode'|'html-encode'|'html-decode';
+const toBase64=(s:string)=>btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+const fromBase64=(s:string)=>new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)));
+const htmlEncode=(s:string)=>s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]!));
+const htmlDecode=(s:string)=>{const t=document.createElement('textarea');t.innerHTML=s;return t.value};
+export default function EncoderDecoderPage(){const [mode,setMode]=useState<Mode>('base64-encode');const [input,setInput]=useState('ToolStack privacy first');const result=useMemo(()=>{try{switch(mode){case'base64-encode':return toBase64(input);case'base64-decode':return fromBase64(input);case'url-encode':return encodeURIComponent(input);case'url-decode':return decodeURIComponent(input);case'html-encode':return htmlEncode(input);case'html-decode':return htmlDecode(input)}}catch(e){return `Error: ${(e as Error).message}`}},[mode,input]);return <LocalToolLayout title='Encoder / Decoder' description='Encode and decode Base64, URLs and HTML entities locally.'><section className='mx-auto max-w-5xl rounded-xl bg-white p-6 shadow'><select value={mode} onChange={e=>setMode(e.target.value as Mode)} className='mb-4 rounded border p-2'>{['base64-encode','base64-decode','url-encode','url-decode','html-encode','html-decode'].map(x=><option key={x} value={x}>{x.replaceAll('-',' ')}</option>)}</select><div className='grid gap-4 md:grid-cols-2'><textarea value={input} onChange={e=>setInput(e.target.value)} className='h-72 rounded border p-3 font-mono'/><textarea readOnly value={result} className='h-72 rounded border bg-slate-50 p-3 font-mono'/></div><button onClick={()=>navigator.clipboard.writeText(result)} className='mt-4 rounded bg-slate-800 px-4 py-2 text-white'>Copy output</button></section></LocalToolLayout>}
