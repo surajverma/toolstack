@@ -10,7 +10,7 @@ export default function ContentCredentialsPage() {
   const [file, setFile] = useState<File | null>(null); const [result, setResult] = useState<Result | null>(null); const [status, setStatus] = useState(''); const [busy, setBusy] = useState(false);
   const inspect = async (next: File) => {
     setFile(next); setResult(null); setStatus(''); setBusy(true); let c2pa: C2paClient | null = null; let reader: C2paReader | null = null;
-    try { const module = await import('@contentauth/c2pa-web/inline'); c2pa = await module.createC2pa() as unknown as C2paClient; reader = await c2pa.reader.fromBlob(next.type || 'application/octet-stream', next); if (!reader) { setStatus('No embedded C2PA / Content Credentials manifest was found in this file.'); return; } const [active, store] = await Promise.all([reader.activeManifest(), reader.manifestStore()]); setResult({ active, store }); setStatus('Content Credentials metadata found.'); }
+    try { const c2paModule = await import('@contentauth/c2pa-web/inline'); c2pa = await c2paModule.createC2pa() as unknown as C2paClient; reader = await c2pa.reader.fromBlob(next.type || 'application/octet-stream', next); if (!reader) { setStatus('No embedded C2PA / Content Credentials manifest was found in this file.'); return; } const [active, store] = await Promise.all([reader.activeManifest(), reader.manifestStore()]); setResult({ active, store }); setStatus('Content Credentials metadata found.'); }
     catch (err) { setStatus(`Could not inspect this file: ${(err as Error).message}`); }
     finally { try { if (reader) await Promise.resolve(reader.free()); } finally { if (c2pa) await Promise.resolve(c2pa.dispose()); setBusy(false); } }
   };
