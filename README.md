@@ -1,86 +1,88 @@
 # ToolStack
-**A privacy-first collection of useful web tools and utilities. All tools run entirely in your browser—your data never leaves your device.**
----
 
-## ✨ Features
+**Privacy-first browser tools. Your working data stays on your device.**
 
-- **Privacy-focused:** All processing happens locally in your browser. No data is sent to any server.
-- **No sign-up, no ads, no tracking.**
-- **Open source:** Contributions welcome!
-- **Modern UI:** Built with Next.js, React, and Tailwind CSS.
+ToolStack is an open-source collection of utilities designed around a strict local-processing rule: tool input is processed in the browser and is not sent to an application API for processing.
 
----
+## Privacy contract
 
-## 🧰 Available Tools
+- Processing is local to the browser.
+- No account is required.
+- No advertising or analytics SDK is included.
+- Tool pages are checked for network-capable APIs by `npm run privacy-check`.
+- Tools that fundamentally require sending user input to a third party are intentionally excluded from the core collection.
 
-- **Image Compressor** – Reduce image file sizes quickly and easily.
-- **Regex Tester & Explainer** – Test your regular expressions and get explanations.
-- **Text Diff Checker** – Compare two pieces of text and highlight differences.
-- **Color Code Converter** – Convert HEX, RGB, HSL color codes instantly.
-- **Placeholder Image Generator** – Create custom placeholder images on the fly.
-- **Text Statistics / Analyzer** – Get instant stats on your text, like word count, characters, and more.
-- **Image Metadata Remover** – View and remove EXIF metadata from your JPEG images to protect your privacy.
-- **Markdown Editor** – A simple Markdown editor with a live preview and HTML export.
-- **CSV to JSON/XML Converter** – Convert CSV data into JSON or XML formats.
-- **Text Contrast Checker** – Check if the contrast between two colors meets accessibility standards.
-- **Image Resizer** – Quickly resize images to your specified dimensions, all in your browser.
-- **Image Cropper** – Crop images to your desired dimensions with an easy-to-use interface.
-- **Lorem Ipsum Generator** – Generate placeholder text with options for paragraphs, sentences, or words.
-- **Easy Regex Generator** – Create common regular expressions by building a sentence, no syntax required.
-- **Find & Replace in Text** – Perform a find and replace on a block of text, with optional Regex support.
-- **Data Anonymizer** – Automatically find and scrub sensitive data like emails and IP addresses from text.
-- **CSS Specificity Calculator** – Calculate and understand the specificity of CSS selectors.
-- **Unit Converter** – Convert between various units of measurement.
-- **HTTP Status Code Explainer** – Quickly find and understand the meaning of HTTP status codes.
-- **List Cleaner & Formatter** – Quickly sort, clean, and format lists of text with various options.
-- **HTML Tag Explainer** – A quick reference guide for all standard HTML tags and their uses.
+## Included tools
 
----
+### Privacy & Security
+- Image Metadata Remover
+- Data Anonymizer
+- File Hash & Checksum
+- Tracking URL Cleaner
+- Password & Passphrase Generator
+- JWT Inspector
+- Browser Privacy Inspector
+- Text Privacy Cleaner
 
-## 🚀 Getting Started
+### Images
+- Image Compressor
+- Image Resizer
+- Image Cropper
+- Image Format Converter
+- Placeholder Image Generator
 
-Clone the repo and install dependencies:
+### Developer / Data
+- JSON Toolbox
+- Regex Tester & Explainer
+- Easy Regex Generator
+- Text Diff Checker
+- Markdown Editor
+- CSV to JSON/XML Converter
+- CSS Specificity Calculator
+- HTTP Status Code Explainer
+- HTML Tag Explainer
+- Encoder / Decoder
+- UUID / ULID Generator
+
+### Text, Accessibility, Converters & Generators
+- Text Statistics / Analyzer
+- Find & Replace
+- List Cleaner & Formatter
+- Text Contrast Checker
+- Color Code Converter
+- Unit Converter
+- Timestamp & Date Toolkit
+- Lorem Ipsum Generator
+
+## Development
 
 ```bash
-git clone https://github.com/SurajVerma/my-toolbox.git
-cd my-toolbox
+git clone https://github.com/surajverma/toolstack.git
+cd toolstack
 npm install
+npm run dev
 ```
 
-Start the development server:
+Open `http://localhost:3000`.
+
+Before submitting a change:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run verify
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+`verify` runs the privacy check, ESLint, TypeScript checking and the production build.
 
----
+## Security and privacy notes
 
-## 🛡️ Privacy
+ToolStack's privacy promise concerns the data entered into its tools. Dependencies and the hosting platform still need normal supply-chain and infrastructure maintenance. Security-sensitive tools should prefer browser-standard cryptographic APIs such as Web Crypto rather than custom cryptography.
 
-All tools work 100% in your browser. No data is ever uploaded or stored remotely. You can use these tools offline after the first load.
+## Contributing
 
----
+Bug reports, privacy improvements, accessibility fixes and new local-only tools are welcome. A proposed tool should be able to perform its main function without transmitting the user's input to another service.
 
-## 🤝 Contributing
+## License
 
-Contributions, bug reports, and suggestions are welcome! Please open an issue or submit a pull request.
+MIT. See [LICENSE](LICENSE).
 
----
-
-## 📄 License
-
-MIT. See [LICENSE](LICENSE) for details.
-
----
-
-## 🙏 Thank you
-
-If you like my work, you can [buy me a coffee ☕](https://ko-fi.com/skv)
+If you find ToolStack useful, you can support the project at https://ko-fi.com/skv.

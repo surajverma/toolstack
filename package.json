@@ -1,12 +1,15 @@
 {
   "name": "toolstack",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
-    "lint": "next lint"
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "privacy-check": "node scripts/check-privacy.mjs",
+    "verify": "npm run privacy-check && npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@types/diff": "^7.0.2",
