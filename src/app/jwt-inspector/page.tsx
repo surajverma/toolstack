@@ -1,5 +1,37 @@
 'use client';
 import { useMemo, useState } from 'react';
 import LocalToolLayout from '@/components/LocalToolLayout';
-const decode=(s:string)=>{const normalized=s.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(s.length/4)*4,'=');return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(normalized),c=>c.charCodeAt(0))))};
-export default function JwtInspectorPage(){const [token,setToken]=useState('');const data=useMemo(()=>{try{const p=token.trim().split('.');if(p.length!==3)throw new Error('A JWT must contain three dot-separated parts.');const header=decode(p[0]);const payload=decode(p[1]);const now=Math.floor(Date.now()/1000);return{header,payload,error:'',expired:typeof payload.exp==='number'?payload.exp<now:null}}catch(e){return{header:null,payload:null,error:(e as Error).message,expired:null}}},[token]);return <LocalToolLayout title='JWT Inspector' description='Decode JWT header and payload data locally. Decoding does not verify the token signature.'><section className='mx-auto max-w-5xl rounded-xl bg-white p-6 shadow'><textarea value={token} onChange={e=>setToken(e.target.value)} placeholder='Paste a JWT here' className='h-32 w-full rounded border p-3 font-mono text-sm'/>{token&&data.error&&<p className='mt-3 text-red-600'>{data.error}</p>}{data.payload&&<div className='mt-5 grid gap-4 md:grid-cols-2'><div><h2 className='font-semibold'>Header</h2><pre className='mt-2 overflow-auto rounded bg-slate-50 p-4 text-sm'>{JSON.stringify(data.header,null,2)}</pre></div><div><h2 className='font-semibold'>Payload {data.expired===true&&<span className='ml-2 text-red-600'>(expired)</span>}{data.expired===false&&<span className='ml-2 text-green-700'>(not expired)</span>}</h2><pre className='mt-2 overflow-auto rounded bg-slate-50 p-4 text-sm'>{JSON.stringify(data.payload,null,2)}</pre></div></div>}<p className='mt-5 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900'>This tool only decodes token contents. It does not verify the cryptographic signature or trustworthiness of the claims.</p></section></LocalToolLayout>}
+
+const decode = (value: string) => {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+  return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(normalized), char => char.charCodeAt(0))));
+};
+
+export default function JwtInspectorPage() {
+  const [token, setToken] = useState('');
+  const [checkedAt, setCheckedAt] = useState(0);
+  const data = useMemo(() => {
+    try {
+      const parts = token.trim().split('.');
+      if (parts.length !== 3) throw new Error('A JWT must contain three dot-separated parts.');
+      return { header: decode(parts[0]), payload: decode(parts[1]), error: '' };
+    } catch (e) {
+      return { header: null, payload: null, error: (e as Error).message };
+    }
+  }, [token]);
+
+  const expired = data.payload && typeof data.payload.exp === 'number' && checkedAt > 0 ? data.payload.exp < checkedAt : null;
+  const handleTokenChange = (value: string) => {
+    setToken(value);
+    setCheckedAt(Math.floor(Date.now() / 1000));
+  };
+
+  return <LocalToolLayout title='JWT Inspector' description='Decode JWT header and payload data locally. Decoding does not verify the token signature.'>
+    <section className='mx-auto max-w-5xl rounded-xl bg-white p-6 shadow'>
+      <textarea value={token} onChange={e => handleTokenChange(e.target.value)} placeholder='Paste a JWT here' className='h-32 w-full rounded border p-3 font-mono text-sm'/>
+      {token && data.error && <p className='mt-3 text-red-600'>{data.error}</p>}
+      {data.payload && <div className='mt-5 grid gap-4 md:grid-cols-2'><div><h2 className='font-semibold'>Header</h2><pre className='mt-2 overflow-auto rounded bg-slate-50 p-4 text-sm'>{JSON.stringify(data.header, null, 2)}</pre></div><div><h2 className='font-semibold'>Payload {expired === true && <span className='ml-2 text-red-600'>(expired)</span>}{expired === false && <span className='ml-2 text-green-700'>(not expired)</span>}</h2><pre className='mt-2 overflow-auto rounded bg-slate-50 p-4 text-sm'>{JSON.stringify(data.payload, null, 2)}</pre></div></div>}
+      <p className='mt-5 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900'>This tool only decodes token contents. It does not verify the cryptographic signature or trustworthiness of the claims.</p>
+    </section>
+  </LocalToolLayout>;
+}
