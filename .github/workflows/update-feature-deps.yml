@@ -1,4 +1,4 @@
-name: Update feature dependencies
+name: Refresh feature lockfile
 on:
   push:
     branches: [feature/privacy-toolstack-refresh]
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
 jobs:
-  update-dependencies:
+  refresh-lockfile:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -18,14 +18,16 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm install pdf-lib@1.17.1 dompurify@3.4.14 postcss-selector-parser@7.1.6 yaml@2.9.0 @contentauth/c2pa-web@0.14.4
-      - run: npm install --save-dev vitest@4.1.11
-      - name: Commit generated dependency files
+      - name: Refresh npm lockfile
+        run: npm install --package-lock-only
+      - name: Report production dependency audit
+        run: npm audit --omit=dev || true
+      - name: Commit refreshed lockfile
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
+          git add package-lock.json
           if ! git diff --cached --quiet; then
-            git commit -m "Add bundled local-processing dependencies"
+            git commit -m "Refresh dependency lockfile"
             git push origin HEAD:feature/privacy-toolstack-refresh
           fi
