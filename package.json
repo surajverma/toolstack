@@ -1,6 +1,6 @@
 {
   "name": "toolstack",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -25,6 +25,7 @@
     "pdf-lib": "^1.17.1",
     "piexifjs": "^1.0.6",
     "postcss-selector-parser": "^7.1.6",
+    "qpdf-run": "^0.2.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-image-crop": "^11.0.10",
