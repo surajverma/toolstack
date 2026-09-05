@@ -16,8 +16,10 @@ ToolStack is an open-source collection of utilities designed around a strict loc
 ## Highlights
 
 ### PDF & Documents
-- PDF Toolkit: merge PDFs, reorder merge inputs, extract/reorder/delete/rotate pages, split every page to ZIP, edit basic metadata and turn images into a PDF.
-- PDF operations run in-browser with bundled `pdf-lib`; ToolStack does not claim secure redaction or general PDF compression.
+- PDF Toolkit: compress PDFs, merge and reorder merge inputs, remove accidental uploads, select which loaded PDF to edit, extract/reorder/delete/rotate pages, split every page to ZIP, edit basic metadata and turn images into a PDF.
+- Lossless PDF compression runs in-browser with bundled qpdf WebAssembly and preserves document structure, selectable text, links and forms.
+- Balanced and Strong compression use bundled PDF.js to render pages locally and rebuild them as JPEG-backed PDF pages. This can produce much larger reductions for scans/image-heavy files, but intentionally flattens the document: selectable text, links, forms, bookmarks, accessibility structure and digital signatures are not preserved.
+- Other PDF editing operations use bundled `pdf-lib`. ToolStack does not claim secure redaction.
 
 ### Privacy & Security
 Image Metadata Remover, Data Anonymizer, File Hash & Checksum, Tracking URL Cleaner, Password & Passphrase Generator, JWT Inspector, Browser Privacy Inspector, Text Privacy Cleaner, AES-GCM File Encryption, File Type & Signature Inspector, Content Credentials (C2PA) Inspector, and HMAC Generator & Verifier.

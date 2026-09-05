@@ -38,7 +38,7 @@ export const TOOLS: Tool[] = [
   tool('text-privacy-cleaner','Text Privacy Cleaner','Reveal or remove hidden Unicode, control and zero-width characters.','Privacy & Security',['privacy','text','unicode','cleaner','security'],{new:true}),
   tool('image-converter','Image Format Converter','Convert supported images to PNG, JPEG or WebP locally.','Images',['image','convert','png','jpeg','webp'],{new:true}),
   tool('file-encryption','File Encryption','Encrypt and decrypt files locally with AES-GCM and a password-derived key.','Privacy & Security',['privacy','encryption','aes','file','security'],{featured:true,new:true}),
-  tool('pdf-toolkit','PDF Toolkit','Merge, split, reorder, extract, delete and rotate PDF pages locally.','PDF & Documents',['pdf','merge','split','pages','documents','privacy'],{featured:true,new:true}),
+  tool('pdf-toolkit','PDF Toolkit','Compress, merge, split, reorder, extract, delete and rotate PDF pages locally.','PDF & Documents',['pdf','compress','merge','split','pages','documents','privacy'],{featured:true,new:true}),
   tool('file-signature-inspector','File Type & Signature Inspector','Inspect file magic bytes instead of trusting only the extension.','Privacy & Security',['file','signature','magic bytes','security','inspector'],{new:true}),
   tool('content-credentials','Content Credentials Inspector','Read embedded C2PA provenance metadata locally with bundled WebAssembly.','Privacy & Security',['c2pa','content credentials','provenance','metadata','privacy'],{featured:true,new:true}),
   tool('xml-toolbox','XML Toolbox','Validate, format, minify and convert XML to JSON locally.','Converters',['xml','json','format','validate','converter'],{new:true}),
