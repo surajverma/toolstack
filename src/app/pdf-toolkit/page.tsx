@@ -517,11 +517,30 @@ export default function PdfToolkitPage() {
       </section>
 
       {readableFiles.length > 0 && <section className='rounded-xl border border-sky-100 bg-sky-50 p-5'>
-        <label htmlFor='working-pdf' className='block font-semibold text-slate-900'>PDF to edit or compress</label>
-        <p className='mt-1 text-sm text-slate-600'>Merge uses the full ordered list above. The tools below work on this selected PDF only.</p>
-        <select id='working-pdf' disabled={busy} value={workingPdf ? fileKey(workingPdf.file) : ''} onChange={event => void selectWorkingPdf(event.target.value)} className='mt-3 w-full rounded border border-sky-200 bg-white p-3 disabled:opacity-50'>
-          {readableFiles.map(item => <option key={fileKey(item.file)} value={fileKey(item.file)}>{item.file.name} ({item.pages} pages)</option>)}
-        </select>
+        <h2 className='font-semibold text-slate-900'>PDF to edit or compress</h2>
+        <p className='mt-1 text-sm text-slate-600'>Merge uses the full ordered list above. The tools below work on {readableFiles.length === 1 ? 'this PDF' : 'the selected PDF'} only.</p>
+
+        {readableFiles.length === 1 && workingPdf ? <div className='mt-3 min-w-0 rounded-lg border border-sky-200 bg-white p-3'>
+          <p className='truncate font-medium text-slate-900' title={workingPdf.file.name}>{workingPdf.file.name}</p>
+          <p className='mt-1 text-sm text-slate-500'>{workingPdf.pages} page{workingPdf.pages === 1 ? '' : 's'} · {formatBytes(workingPdf.file.size)}</p>
+        </div> : <div className='mt-3 max-h-64 space-y-2 overflow-y-auto pr-1' role='listbox' aria-label='PDF to edit or compress'>
+          {readableFiles.map(item => {
+            const key = fileKey(item.file);
+            const selected = key === selectedKey;
+            return <button
+              key={key}
+              type='button'
+              role='option'
+              aria-selected={selected}
+              disabled={busy}
+              onClick={() => void selectWorkingPdf(key)}
+              className={`block w-full min-w-0 rounded-lg border p-3 text-left transition disabled:opacity-50 ${selected ? 'border-sky-400 bg-white ring-2 ring-sky-100' : 'border-sky-200 bg-white/70 hover:bg-white'}`}
+            >
+              <span className='block truncate font-medium text-slate-900' title={item.file.name}>{item.file.name}</span>
+              <span className='mt-1 block text-sm text-slate-500'>{item.pages} page{item.pages === 1 ? '' : 's'} · {formatBytes(item.file.size)}</span>
+            </button>;
+          })}
+        </div>}
       </section>}
 
       {workingPdf && <section className='rounded-xl bg-white p-6 shadow'>
