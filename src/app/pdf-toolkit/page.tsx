@@ -232,7 +232,7 @@ export default function PdfToolkitPage() {
 
   const removeFile = async (key: string) => {
     const next = files.filter(item => fileKey(item.file) !== key);
-    setFiles(next);
+    setFiles(prev => prev.filter(item => fileKey(item.file) !== key));
     setMessage('');
 
     if (selectedKey !== key) return;
