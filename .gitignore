@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# generated browser runtime assets
+/public/qpdf/
+
 # production
 /build
 
