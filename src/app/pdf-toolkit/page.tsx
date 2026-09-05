@@ -93,7 +93,7 @@ async function rasterCompressPdf(
   mode: Exclude<CompressionMode, 'lossless'>,
   onProgress: (current: number, total: number) => void,
 ) {
-  const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
+  const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
 
   const input = new Uint8Array(await file.arrayBuffer());
@@ -371,68 +371,68 @@ export default function PdfToolkitPage() {
   };
 
   const compressPdf = async (workingPdf: PdfInfo) => {
-  if (workingPdf.file.size > MAX_COMPRESSION_BYTES) {
-    setMessage('For browser stability, compression is limited to PDFs up to 100 MB.');
-    return;
-  }
+    if (workingPdf.file.size > MAX_COMPRESSION_BYTES) {
+      setMessage('For browser stability, compression is limited to PDFs up to 100 MB.');
+      return;
+    }
 
-  setBusy(true);
-  setMessage('');
-  setCompressionResult(null);
-  setCompressionStatus(compressionMode === 'lossless' ? 'Optimizing PDF structure…' : 'Preparing pages…');
+    setBusy(true);
+    setMessage('');
+    setCompressionResult(null);
+    setCompressionStatus(compressionMode === 'lossless' ? 'Optimizing PDF structure…' : 'Preparing pages…');
 
-  try {
-    const input = new Uint8Array(await workingPdf.file.arrayBuffer());
-    let output: Uint8Array;
+    try {
+      const input = new Uint8Array(await workingPdf.file.arrayBuffer());
+      let output: Uint8Array;
 
-    if (compressionMode === 'lossless') {
-      const { createQpdfRunner } = await import('qpdf-run');
-      const runner = await createQpdfRunner({
-        workerUrl: '/qpdf/worker.js',
-        qpdfJsUrl: '/qpdf/qpdf.js',
-        wasmUrl: '/qpdf/qpdf.wasm',
-        timeoutMs: 90000,
-      });
-
-      try {
-        output = await runner.runOne({
-          input,
-          inputName: 'input.pdf',
-          outputName: 'output.pdf',
-          args: losslessCompressionArgs(),
+      if (compressionMode === 'lossless') {
+        const { createQpdfRunner } = await import('qpdf-run');
+        const runner = await createQpdfRunner({
+          workerUrl: '/qpdf/worker.js',
+          qpdfJsUrl: '/qpdf/qpdf.js',
+          wasmUrl: '/qpdf/qpdf.wasm',
+          timeoutMs: 90000,
         });
-      } finally {
-        await runner.destroy();
+
+        try {
+          output = await runner.runOne({
+            input,
+            inputName: 'input.pdf',
+            outputName: 'output.pdf',
+            args: losslessCompressionArgs(),
+          });
+        } finally {
+          await runner.destroy();
+        }
+      } else {
+        output = await rasterCompressPdf(
+          workingPdf.file,
+          compressionMode,
+          (current, total) => setCompressionStatus(`Rendering page ${current} of ${total}…`),
+        );
       }
-    } else {
-      output = await rasterCompressPdf(
-        workingPdf.file,
-        compressionMode,
-        (current, total) => setCompressionStatus(`Rendering page ${current} of ${total}…`),
-      );
+
+      const downloaded = output.byteLength < input.byteLength;
+      setCompressionResult({ original: input.byteLength, compressed: output.byteLength, downloaded });
+
+      if (downloaded) {
+        downloadBytes(output, `${baseName(workingPdf.file.name)}-compressed.pdf`);
+      } else {
+        setMessage('This PDF is already compact enough that the selected mode did not produce a smaller file. No larger copy was downloaded.');
+      }
+    } catch (err) {
+      const error = err as Error & { stderr?: string[] };
+      const detail = Array.isArray(error.stderr) && error.stderr.length
+        ? `${error.message} — ${error.stderr.slice(-2).join(' ')}`
+        : error.message || String(err);
+      setMessage(`Compression failed: ${detail}`);
+    } finally {
+      setCompressionStatus('');
+      setBusy(false);
     }
+  };
 
-    const downloaded = output.byteLength < input.byteLength;
-    setCompressionResult({ original: input.byteLength, compressed: output.byteLength, downloaded });
-
-    if (downloaded) {
-      downloadBytes(output, `${baseName(workingPdf.file.name)}-compressed.pdf`);
-    } else {
-      setMessage('This PDF is already compact enough that the selected mode did not produce a smaller file. No larger copy was downloaded.');
-    }
-  } catch (err) {
-    const error = err as Error & { stderr?: string[] };
-    const detail = Array.isArray(error.stderr) && error.stderr.length
-      ? `${error.message} — ${error.stderr.slice(-2).join(' ')}`
-      : error.message || String(err);
-    setMessage(`Compression failed: ${detail}`);
-  } finally {
-    setCompressionStatus('');
-    setBusy(false);
-  }
-};
-
-const imagesToPdf = async () => {
+  const imagesToPdf = async () => {
     if (!images.length) return;
     setBusy(true);
     setMessage('');
