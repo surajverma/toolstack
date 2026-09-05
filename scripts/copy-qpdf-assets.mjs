@@ -3,12 +3,15 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
-const packageRoot = join(projectRoot, 'node_modules', 'qpdf-run');
-const outputRoot = join(projectRoot, 'public', 'qpdf');
-const workerPath = join(packageRoot, 'src', 'worker.js');
+const qpdfPackageRoot = join(projectRoot, 'node_modules', 'qpdf-run');
+const qpdfOutputRoot = join(projectRoot, 'public', 'qpdf');
+const pdfjsPackageRoot = join(projectRoot, 'node_modules', 'pdfjs-dist');
+const pdfjsOutputRoot = join(projectRoot, 'public', 'pdfjs');
+const workerPath = join(qpdfPackageRoot, 'src', 'worker.js');
 const marker = 'TOOLSTACK_QPDF_ASSET_FALLBACK';
 
-await mkdir(outputRoot, { recursive: true });
+await mkdir(qpdfOutputRoot, { recursive: true });
+await mkdir(pdfjsOutputRoot, { recursive: true });
 
 let workerSource = await readFile(workerPath, 'utf8');
 
@@ -32,8 +35,9 @@ if (!workerSource.includes(marker)) {
   await writeFile(workerPath, workerSource, 'utf8');
 }
 
-await writeFile(join(outputRoot, 'worker.js'), workerSource, 'utf8');
-await copyFile(join(packageRoot, 'vendor', 'qpdf', 'lib', 'qpdf.js'), join(outputRoot, 'qpdf.js'));
-await copyFile(join(packageRoot, 'vendor', 'qpdf', 'lib', 'qpdf.wasm'), join(outputRoot, 'qpdf.wasm'));
+await writeFile(join(qpdfOutputRoot, 'worker.js'), workerSource, 'utf8');
+await copyFile(join(qpdfPackageRoot, 'vendor', 'qpdf', 'lib', 'qpdf.js'), join(qpdfOutputRoot, 'qpdf.js'));
+await copyFile(join(qpdfPackageRoot, 'vendor', 'qpdf', 'lib', 'qpdf.wasm'), join(qpdfOutputRoot, 'qpdf.wasm'));
+await copyFile(join(pdfjsPackageRoot, 'build', 'pdf.worker.min.mjs'), join(pdfjsOutputRoot, 'pdf.worker.min.mjs'));
 
-console.log('Prepared qpdf browser assets in public/qpdf/ with the Turbopack URL fallback.');
+console.log('Prepared qpdf and PDF.js browser assets for local PDF compression.');
