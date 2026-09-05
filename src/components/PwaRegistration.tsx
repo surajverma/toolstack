@@ -29,7 +29,7 @@ export default function PwaRegistration() {
     if (!('serviceWorker' in navigator)) return;
 
     if (process.env.NODE_ENV !== 'production') {
-      void cleanupDevelopmentPwaState();
+      void cleanupDevelopmentPwaState().catch(() => undefined);
       return;
     }
 
