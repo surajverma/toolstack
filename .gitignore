@@ -19,6 +19,7 @@
 
 # generated browser runtime assets
 /public/qpdf/
+/public/pdfjs/
 
 # production
 /build
