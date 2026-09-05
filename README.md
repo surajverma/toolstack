@@ -17,7 +17,8 @@ ToolStack is an open-source collection of utilities designed around a strict loc
 
 ### PDF & Documents
 - PDF Toolkit: compress PDFs, merge and reorder merge inputs, remove accidental uploads, select which loaded PDF to edit, extract/reorder/delete/rotate pages, split every page to ZIP, edit basic metadata and turn images into a PDF.
-- PDF compression runs in-browser with bundled qpdf WebAssembly. Lossless mode optimizes PDF structure/streams; optional balanced and strong modes can use lossy JPEG recompression for supported images without rasterizing all pages or turning searchable text into images.
+- Lossless PDF compression runs in-browser with bundled qpdf WebAssembly and preserves document structure, selectable text, links and forms.
+- Balanced and Strong compression use bundled PDF.js to render pages locally and rebuild them as JPEG-backed PDF pages. This can produce much larger reductions for scans/image-heavy files, but intentionally flattens the document: selectable text, links, forms, bookmarks, accessibility structure and digital signatures are not preserved.
 - Other PDF editing operations use bundled `pdf-lib`. ToolStack does not claim secure redaction.
 
 ### Privacy & Security
