@@ -79,4 +79,4 @@ Bug reports, privacy improvements, accessibility fixes and new local-only tools 
 
 MIT. See [LICENSE](LICENSE).
 
-If you find ToolStack useful, you can support the project at https://ko-fi.com/skv.
+If you find ToolStack useful, you can [buy me a coffee](https://ko-fi.com/skv).
