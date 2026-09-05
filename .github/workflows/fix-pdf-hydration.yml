@@ -1,0 +1,75 @@
+name: Fix PDF hydration boundary
+on:
+  push:
+    branches: [feature/pdf-toolkit-compression]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/pdf-toolkit-compression
+      - name: Add client mount boundary to PDF toolkit
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/app/pdf-toolkit/page.tsx')
+          text = path.read_text()
+
+          text = text.replace("import { useState } from 'react';", "import { useEffect, useState } from 'react';", 1)
+
+          state_anchor = """export default function PdfToolkitPage() {
+  const [files, setFiles] = useState<PdfInfo[]>([]);"""
+          state_replacement = """export default function PdfToolkitPage() {
+  const [mounted, setMounted] = useState(false);
+  const [files, setFiles] = useState<PdfInfo[]>([]);"""
+          if state_anchor not in text:
+              raise SystemExit('PDF component state anchor not found')
+          text = text.replace(state_anchor, state_replacement, 1)
+
+          effect_anchor = """  const [compressionResult, setCompressionResult] = useState<CompressionResult | null>(null);
+  const [compressionStatus, setCompressionStatus] = useState('');
+
+  const activatePdf = async (item: PdfInfo) => {"""
+          effect_replacement = """  const [compressionResult, setCompressionResult] = useState<CompressionResult | null>(null);
+  const [compressionStatus, setCompressionStatus] = useState('');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const activatePdf = async (item: PdfInfo) => {"""
+          if effect_anchor not in text:
+              raise SystemExit('PDF effect anchor not found')
+          text = text.replace(effect_anchor, effect_replacement, 1)
+
+          render_anchor = """  const readableFiles = files.filter(item => !item.error && item.pages > 0);"""
+          render_replacement = """  if (!mounted) {
+    return <LocalToolLayout title='PDF Toolkit' description='Compress, merge, split, reorder, extract, delete and rotate PDF pages, edit metadata, or turn images into a PDF without uploading documents.'>
+      <div className='mx-auto max-w-6xl'>
+        <section className='rounded-xl bg-white p-6 shadow' aria-live='polite'>
+          <h2 className='text-xl font-semibold'>Loading browser PDF tools…</h2>
+          <p className='mt-2 text-sm text-slate-500'>Preparing the local PDF workspace. Your files stay on this device.</p>
+        </section>
+      </div>
+    </LocalToolLayout>;
+  }
+
+  const readableFiles = files.filter(item => !item.error && item.pages > 0);"""
+          if render_anchor not in text:
+              raise SystemExit('PDF render anchor not found')
+          text = text.replace(render_anchor, render_replacement, 1)
+
+          path.write_text(text)
+          PY
+      - name: Commit hydration fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/app/pdf-toolkit/page.tsx
+          git commit -m "Make PDF toolkit hydration deterministic"
+          git push origin HEAD:feature/pdf-toolkit-compression
