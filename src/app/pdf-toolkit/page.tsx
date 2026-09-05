@@ -15,6 +15,9 @@ const EMPTY_META: MetadataState = { title: '', author: '', subject: '', keywords
 const MAX_PDF_FILES = 20;
 const MAX_TOTAL_BYTES = 250 * 1024 * 1024;
 const MAX_COMPRESSION_BYTES = 100 * 1024 * 1024;
+const MAX_RASTER_PAGES = 150;
+const MAX_RASTER_PAGE_PIXELS = 20_000_000;
+const MAX_RASTER_TOTAL_PIXELS = 220_000_000;
 const fileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
 const baseName = (name: string) => name.replace(/\.pdf$/i, '');
 
@@ -54,18 +57,100 @@ async function readMetadata(item: PdfInfo): Promise<MetadataState> {
   };
 }
 
-function compressionArgs(mode: CompressionMode) {
-  const args = [
+function losslessCompressionArgs() {
+  return [
     '--compress-streams=y',
     '--decode-level=generalized',
     '--recompress-flate',
     '--compression-level=9',
     '--object-streams=generate',
+    '--',
+    'input.pdf',
+    'output.pdf',
   ];
-  if (mode !== 'lossless') {
-    args.push('--optimize-images', `--jpeg-quality=${mode === 'balanced' ? 75 : 50}`);
+}
+
+function rasterSettings(mode: Exclude<CompressionMode, 'lossless'>) {
+  return mode === 'balanced'
+    ? { dpi: 150, jpegQuality: 0.72 }
+    : { dpi: 96, jpegQuality: 0.52 };
+}
+
+function canvasToJpeg(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Uint8Array>((resolve, reject) => {
+    canvas.toBlob(async blob => {
+      if (!blob) {
+        reject(new Error('The browser could not encode a compressed PDF page.'));
+        return;
+      }
+      resolve(new Uint8Array(await blob.arrayBuffer()));
+    }, 'image/jpeg', quality);
+  });
+}
+
+async function rasterCompressPdf(
+  file: File,
+  mode: Exclude<CompressionMode, 'lossless'>,
+  onProgress: (current: number, total: number) => void,
+) {
+  const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
+
+  const input = new Uint8Array(await file.arrayBuffer());
+  const loadingTask = pdfjs.getDocument({ data: input });
+  const source = await loadingTask.promise;
+  const { dpi, jpegQuality } = rasterSettings(mode);
+
+  try {
+    if (source.numPages > MAX_RASTER_PAGES) {
+      throw new Error(`Balanced/Strong compression is limited to ${MAX_RASTER_PAGES} pages. Use Lossless for larger documents.`);
+    }
+
+    const output = await PDFDocument.create();
+    let totalPixels = 0;
+
+    for (let pageNumber = 1; pageNumber <= source.numPages; pageNumber++) {
+      onProgress(pageNumber, source.numPages);
+      const page = await source.getPage(pageNumber);
+      const baseViewport = page.getViewport({ scale: 1 });
+      let scale = dpi / 72;
+      const projectedPixels = baseViewport.width * scale * baseViewport.height * scale;
+
+      if (projectedPixels > MAX_RASTER_PAGE_PIXELS) {
+        scale *= Math.sqrt(MAX_RASTER_PAGE_PIXELS / projectedPixels);
+      }
+
+      const viewport = page.getViewport({ scale });
+      const width = Math.max(1, Math.ceil(viewport.width));
+      const height = Math.max(1, Math.ceil(viewport.height));
+      totalPixels += width * height;
+
+      if (totalPixels > MAX_RASTER_TOTAL_PIXELS) {
+        throw new Error('Balanced/Strong compression would require too much browser memory. Split this PDF or use Lossless mode.');
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d', { alpha: false });
+      if (!context) throw new Error('Canvas rendering is unavailable in this browser.');
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, width, height);
+
+      await page.render({ canvasContext: context, viewport, background: '#ffffff' }).promise;
+      const jpeg = await canvasToJpeg(canvas, jpegQuality);
+      const image = await output.embedJpg(jpeg);
+      const outputPage = output.addPage([baseViewport.width, baseViewport.height]);
+      outputPage.drawImage(image, { x: 0, y: 0, width: baseViewport.width, height: baseViewport.height });
+      page.cleanup();
+      canvas.width = 1;
+      canvas.height = 1;
+    }
+
+    return await output.save({ useObjectStreams: true });
+  } finally {
+    await source.destroy();
   }
-  return [...args, '--', 'input.pdf', 'output.pdf'];
 }
 
 export default function PdfToolkitPage() {
@@ -80,6 +165,7 @@ export default function PdfToolkitPage() {
   const [images, setImages] = useState<File[]>([]);
   const [compressionMode, setCompressionMode] = useState<CompressionMode>('lossless');
   const [compressionResult, setCompressionResult] = useState<CompressionResult | null>(null);
+  const [compressionStatus, setCompressionStatus] = useState('');
 
   const activatePdf = async (item: PdfInfo) => {
     setSelectedKey(fileKey(item.file));
@@ -285,50 +371,68 @@ export default function PdfToolkitPage() {
   };
 
   const compressPdf = async (workingPdf: PdfInfo) => {
-    if (workingPdf.file.size > MAX_COMPRESSION_BYTES) {
-      setMessage('For browser stability, compression is limited to PDFs up to 100 MB.');
-      return;
-    }
+  if (workingPdf.file.size > MAX_COMPRESSION_BYTES) {
+    setMessage('For browser stability, compression is limited to PDFs up to 100 MB.');
+    return;
+  }
 
-    setBusy(true);
-    setMessage('');
-    setCompressionResult(null);
-    try {
+  setBusy(true);
+  setMessage('');
+  setCompressionResult(null);
+  setCompressionStatus(compressionMode === 'lossless' ? 'Optimizing PDF structure…' : 'Preparing pages…');
+
+  try {
+    const input = new Uint8Array(await workingPdf.file.arrayBuffer());
+    let output: Uint8Array;
+
+    if (compressionMode === 'lossless') {
       const { createQpdfRunner } = await import('qpdf-run');
       const runner = await createQpdfRunner({
-        workerUrl: new URL('qpdf-run/worker', import.meta.url).href,
-        qpdfJsUrl: new URL('qpdf-run/qpdf.js', import.meta.url).href,
-        wasmUrl: new URL('qpdf-run/qpdf.wasm', import.meta.url).href,
+        workerUrl: '/qpdf/worker.js',
+        qpdfJsUrl: '/qpdf/qpdf.js',
+        wasmUrl: '/qpdf/qpdf.wasm',
         timeoutMs: 90000,
       });
 
       try {
-        const input = new Uint8Array(await workingPdf.file.arrayBuffer());
-        const output = await runner.runOne({
+        output = await runner.runOne({
           input,
           inputName: 'input.pdf',
           outputName: 'output.pdf',
-          args: compressionArgs(compressionMode),
+          args: losslessCompressionArgs(),
         });
-        const downloaded = output.byteLength < input.byteLength;
-        setCompressionResult({ original: input.byteLength, compressed: output.byteLength, downloaded });
-
-        if (downloaded) {
-          downloadBytes(output, `${baseName(workingPdf.file.name)}-compressed.pdf`);
-        } else {
-          setMessage('This PDF is already compact enough that the selected mode did not produce a smaller file. No larger copy was downloaded.');
-        }
       } finally {
         await runner.destroy();
       }
-    } catch (err) {
-      setMessage(`Compression failed: ${(err as Error).message}`);
-    } finally {
-      setBusy(false);
+    } else {
+      output = await rasterCompressPdf(
+        workingPdf.file,
+        compressionMode,
+        (current, total) => setCompressionStatus(`Rendering page ${current} of ${total}…`),
+      );
     }
-  };
 
-  const imagesToPdf = async () => {
+    const downloaded = output.byteLength < input.byteLength;
+    setCompressionResult({ original: input.byteLength, compressed: output.byteLength, downloaded });
+
+    if (downloaded) {
+      downloadBytes(output, `${baseName(workingPdf.file.name)}-compressed.pdf`);
+    } else {
+      setMessage('This PDF is already compact enough that the selected mode did not produce a smaller file. No larger copy was downloaded.');
+    }
+  } catch (err) {
+    const error = err as Error & { stderr?: string[] };
+    const detail = Array.isArray(error.stderr) && error.stderr.length
+      ? `${error.message} — ${error.stderr.slice(-2).join(' ')}`
+      : error.message || String(err);
+    setMessage(`Compression failed: ${detail}`);
+  } finally {
+    setCompressionStatus('');
+    setBusy(false);
+  }
+};
+
+const imagesToPdf = async () => {
     if (!images.length) return;
     setBusy(true);
     setMessage('');
@@ -378,10 +482,10 @@ export default function PdfToolkitPage() {
       ? 'Creates a new PDF with the listed pages removed. Your original file is never modified.'
       : 'Rotates only the listed pages by the angle you choose and downloads a new copy.';
   const compressionHelp = compressionMode === 'lossless'
-    ? 'Recompresses compatible streams and PDF structure without intentionally reducing image quality. Best first choice for normal documents.'
+    ? 'Recompresses compatible streams and PDF structure without intentionally reducing image quality. Selectable text, links, forms and document structure are preserved.'
     : compressionMode === 'balanced'
-      ? 'Includes image optimization at JPEG quality 75 when qpdf can make supported images smaller. Text remains text, but some images may become lossy.'
-      : 'Uses stronger JPEG quality 50 image optimization when possible. Best for size reduction when some image-quality loss is acceptable.';
+      ? 'Renders each page at about 150 DPI and rebuilds the PDF with JPEG pages. Usually much smaller for scans, but selectable text, links, forms, bookmarks, accessibility structure and signatures are removed.'
+      : 'Renders each page at about 96 DPI with stronger JPEG compression. Best for small email/upload files when reduced sharpness and flattened pages are acceptable.';
 
   return <LocalToolLayout title='PDF Toolkit' description='Compress, merge, split, reorder, extract, delete and rotate PDF pages, edit metadata, or turn images into a PDF without uploading documents.'>
     <div className='mx-auto max-w-6xl space-y-6'>
@@ -422,16 +526,17 @@ export default function PdfToolkitPage() {
 
       {workingPdf && <section className='rounded-xl bg-white p-6 shadow'>
         <h2 className='text-xl font-semibold'>Compress PDF</h2>
-        <p className='mt-1 text-sm text-slate-500'>Compression runs locally with qpdf WebAssembly. Searchable/selectable text is preserved; ToolStack does not rasterize every page into an image.</p>
+        <p className='mt-1 text-sm text-slate-500'>All compression stays in your browser. Lossless preserves document structure; Balanced and Strong deliberately flatten pages for much larger reductions on scanned or image-heavy PDFs.</p>
         <div className='mt-4 grid gap-3 md:grid-cols-[16rem_1fr]'>
           <select value={compressionMode} onChange={event => { setCompressionMode(event.target.value as CompressionMode); setCompressionResult(null); }} className='rounded border p-3'>
             <option value='lossless'>Lossless / structural</option>
-            <option value='balanced'>Balanced image optimization</option>
-            <option value='strong'>Stronger image optimization</option>
+            <option value='balanced'>Balanced · 150 DPI (flatten pages)</option>
+            <option value='strong'>Strong · 96 DPI (flatten pages)</option>
           </select>
           <p className='rounded bg-slate-50 p-3 text-sm text-slate-600'>{compressionHelp}</p>
         </div>
         <button disabled={busy} onClick={() => void compressPdf(workingPdf)} className='mt-4 rounded bg-emerald-600 px-4 py-2 font-semibold text-white disabled:opacity-40'>{busy ? 'Working…' : `Compress ${workingPdf.file.name}`}</button>
+        {compressionStatus && <p className='mt-3 text-sm text-slate-600' aria-live='polite'>{compressionStatus}</p>}
         {compressionResult && <div className='mt-4 rounded border border-slate-200 bg-slate-50 p-4 text-sm'>
           <div className='grid gap-2 sm:grid-cols-3'>
             <div><span className='block text-slate-500'>Original</span><strong>{formatBytes(compressionResult.original)}</strong></div>
@@ -480,7 +585,7 @@ export default function PdfToolkitPage() {
         <button disabled={busy || !images.length} onClick={() => void imagesToPdf()} className='mt-4 rounded bg-sky-600 px-4 py-2 text-white disabled:opacity-40'>Create PDF from {images.length || 0} image{images.length === 1 ? '' : 's'}</button>
       </section>
 
-      <div className='rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950'>PDF operations rewrite document structure. Existing digital signatures can become invalid, and unusual/encrypted PDFs may not be supported. Lossless compression mainly optimizes PDF structure and streams, so an already-efficient or image-heavy PDF may shrink only a little. Balanced/strong modes can use lossy JPEG recompression for supported images.</div>
+      <div className='rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950'>PDF operations rewrite document structure. Existing digital signatures can become invalid, and unusual/encrypted PDFs may not be supported. Lossless compression mainly optimizes PDF structure and streams, so an already-efficient or image-heavy PDF may shrink only a little. Balanced/Strong modes flatten every page into a JPEG-backed page, so text selection, links, forms, bookmarks, accessibility structure and digital signatures are not preserved.</div>
       {message && <p className='rounded bg-red-50 p-3 text-red-700' aria-live='polite'>{message}</p>}
     </div>
   </LocalToolLayout>;
