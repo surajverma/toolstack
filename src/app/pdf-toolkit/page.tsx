@@ -137,7 +137,7 @@ async function rasterCompressPdf(
       context.fillStyle = '#ffffff';
       context.fillRect(0, 0, width, height);
 
-      await page.render({ canvasContext: context, viewport, background: '#ffffff' }).promise;
+      await page.render({ canvas, canvasContext: context, viewport, background: '#ffffff' }).promise;
       const jpeg = await canvasToJpeg(canvas, jpegQuality);
       const image = await output.embedJpg(jpeg);
       const outputPage = output.addPage([baseViewport.width, baseViewport.height]);
@@ -149,7 +149,7 @@ async function rasterCompressPdf(
 
     return await output.save({ useObjectStreams: true });
   } finally {
-    await source.destroy();
+    await loadingTask.destroy();
   }
 }
 
