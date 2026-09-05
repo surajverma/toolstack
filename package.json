@@ -3,7 +3,10 @@
   "version": "0.3.1",
   "private": true,
   "scripts": {
+    "prepare-qpdf-assets": "node scripts/copy-qpdf-assets.mjs",
+    "predev": "npm run prepare-qpdf-assets",
     "dev": "next dev",
+    "prebuild": "npm run prepare-qpdf-assets",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
