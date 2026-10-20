@@ -65,7 +65,7 @@ export default function UrlCleanerPage() {
       title='Tracking URL Cleaner'
       description='Strip common analytics and advertising parameters without sending the URL anywhere.'
     >
-      <section className='mx-auto max-w-4xl rounded-xl bg-white p-6 shadow'>
+      <section className='mx-auto w-full min-w-0 rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <label className='font-semibold'>URL</label>
         <textarea
           value={input}
@@ -74,7 +74,7 @@ export default function UrlCleanerPage() {
         />
 
         {data.error ? (
-          <p className='mt-3 text-red-600'>Invalid URL</p>
+          <p className='mt-3 text-red-600 dark:text-red-400'>Invalid URL</p>
         ) : (
           <>
             <label className='mt-5 block font-semibold'>Clean URL</label>
@@ -92,14 +92,14 @@ export default function UrlCleanerPage() {
               </button>
             </div>
 
-            <p className='mt-3 text-sm text-slate-600'>
+            <p className='mt-3 text-sm text-slate-600 dark:text-slate-300'>
               {data.removed.length
                 ? `Removed: ${data.removed.join(', ')}`
                 : 'No known tracking parameters found.'}
             </p>
 
             {data.parts && (
-              <dl className='mt-6 grid gap-2 rounded bg-slate-50 p-4 text-sm sm:grid-cols-[8rem_1fr]'>
+              <dl className='mt-6 grid gap-2 rounded bg-slate-50 dark:bg-slate-950 p-4 text-sm sm:grid-cols-[8rem_1fr]'>
                 {Object.entries(data.parts).map(([key, value]) => (
                   <Fragment key={key}>
                     <dt className='font-semibold capitalize'>{key}</dt>

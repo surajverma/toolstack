@@ -10,6 +10,8 @@ export default defineConfig([
     'out/**',
     'build/**',
     'coverage/**',
+    'public/qpdf/**',
+    'public/pdfjs/**',
     'next-env.d.ts',
   ]),
 ]);

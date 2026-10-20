@@ -105,7 +105,7 @@ export default function FileEncryptionPage() {
       title='File Encryption'
       description='Encrypt files locally with AES-256-GCM. Keys are derived from your password using PBKDF2-SHA-256; neither files nor passwords leave the browser.'
     >
-      <section className='mx-auto max-w-3xl rounded-xl bg-white p-6 shadow'>
+      <section className='mx-auto max-w-3xl rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <input
           type='file'
           onChange={(event) => setFile(event.target.files?.[0] ?? null)}
@@ -137,8 +137,8 @@ export default function FileEncryptionPage() {
             Decrypt .tstack file
           </button>
         </div>
-        {error && <p className='mt-4 text-red-600'>{error}</p>}
-        <div className='mt-6 rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900'>
+        {error && <p className='mt-4 text-red-600 dark:text-red-400'>{error}</p>}
+        <div className='mt-6 rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 p-4 text-sm text-amber-900 dark:text-amber-200'>
           <strong>Important:</strong> There is no password recovery. Keep the password separately. This
           format is ToolStack-specific and intended for local convenience, not archival interoperability.
         </div>
