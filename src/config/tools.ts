@@ -7,7 +7,7 @@ const tool = (slug: string, name: string, description: string, category: ToolCat
 export const TOOLS: Tool[] = [
   tool('image-compressor','Image Compressor','Compress image batches locally with browser-side processing.','Images',['image','compress','optimize','media']),
   tool('regex-tester','Regex Tester & Explainer','Test regular expressions in a disposable worker with a timeout.','Developer',['text','developer','regex','code']),
-  tool('text-diff','Text Diff Checker','Compare two pieces of text and highlight differences.','Text & Data',['text','compare','diff']),
+  tool('text-diff','Text & File Diff','Compare and merge files inline, match records and export reviewed, redacted changes.','Text & Data',['text','file','compare','diff','merge','csv','json','env','redact','privacy'],{new:true}),
   tool('color-converter','Color Code Converter','Convert HEX, RGB and HSL color values.','Converters',['color','design','developer','converter']),
   tool('placeholder-generator','Placeholder Image Generator','Create custom placeholder images locally.','Images',['image','design','placeholder']),
   tool('text-analyzer','Text Statistics / Analyzer','Count words, characters, sentences and more.','Text & Data',['text','stats','analyzer','counter']),
@@ -20,14 +20,14 @@ export const TOOLS: Tool[] = [
   tool('lorem-ipsum-generator','Lorem Ipsum Generator','Generate placeholder text.','Generators',['text','generator','placeholder','design']),
   tool('regex-generator','Easy Regex Generator','Build common regular expressions without memorizing syntax.','Developer',['regex','generator','developer','text','code']),
   tool('find-replace','Find & Replace in Text','Find and replace text with optional regex support.','Text & Data',['text','find','replace','regex']),
-  tool('data-anonymizer','Data Anonymizer','Redact common sensitive-looking values locally.','Privacy & Security',['text','privacy','security','anonymize','redact'],{featured:true}),
+  tool('data-anonymizer','Data Anonymizer','Scrub sensitive text or mask linked CSV / JSON datasets with consistent aliases.','Privacy & Security',['text','privacy','security','anonymize','redact','csv','dataset','pseudonymize'],{featured:true}),
   tool('css-specificity-calculator','CSS Specificity Calculator','Calculate modern CSS selector specificity with an AST parser.','Developer',['css','developer','specificity','design']),
   tool('unit-converter','Unit Converter','Convert common measurement units.','Converters',['converter','units','measurement','math']),
   tool('http-status-codes','HTTP Status Code Explainer','Look up HTTP status codes and meanings.','Developer',['http','developer','reference','network']),
   tool('list-cleaner','List Cleaner & Formatter','Sort, deduplicate and format text lists.','Text & Data',['text','list','format','cleaner','sort']),
   tool('html-tag-explainer','HTML Tag Explainer','Reference standard HTML tags and their uses.','Developer',['html','developer','reference','code']),
   tool('file-hash','File Hash & Checksum','Generate SHA-256, SHA-384 and SHA-512 checksums without uploading files.','Privacy & Security',['privacy','hash','checksum','file','security'],{featured:true,new:true}),
-  tool('json-toolbox','JSON Toolbox','Format, minify, validate, sort and structurally compare JSON locally.','Developer',['json','format','validate','diff','developer','data'],{new:true}),
+  tool('json-toolbox','JSON Toolbox','Format, compare and turn JSON samples into TypeScript or JSON Schema.','Developer',['json','format','validate','diff','developer','data','typescript','schema'],{new:true}),
   tool('url-cleaner','Tracking URL Cleaner','Remove common tracking parameters and inspect URL parts locally.','Privacy & Security',['privacy','url','tracking','utm','cleaner'],{featured:true,new:true}),
   tool('password-generator','Password & Passphrase Generator','Generate cryptographically secure passwords and passphrases locally.','Privacy & Security',['password','security','privacy','generator'],{featured:true,new:true}),
   tool('encoder-decoder','Encoder / Decoder','Encode and decode Base64, URLs and HTML entities.','Developer',['base64','url','html','unicode','encode','decode'],{new:true}),
@@ -46,6 +46,12 @@ export const TOOLS: Tool[] = [
   tool('csp-builder','CSP Builder & Analyzer','Draft and inspect Content Security Policy headers locally.','Developer',['csp','security','headers','developer','web'],{new:true}),
   tool('hmac-tool','HMAC Generator & Verifier','Generate and verify HMAC-SHA signatures using Web Crypto.','Privacy & Security',['hmac','hash','signature','crypto','security'],{new:true}),
   tool('cron-explainer','Cron Expression Explainer','Explain standard five-field cron expressions.','Developer',['cron','schedule','developer','automation'],{new:true}),
+  tool('support-sanitizer','Support File Sanitizer','Clean logs, JSON and HAR files, or convert cURL to redacted JavaScript.','Privacy & Security',['privacy','har','logs','support','secrets','redact','curl','fetch'],{featured:true,new:true}),
+  tool('screenshot-redactor','Screenshot Redactor','Replace sensitive pixels with solid areas and export a new, flattened PNG.','Privacy & Security',['privacy','screenshot','image','redact','sharing'],{featured:true,new:true}),
+  tool('document-privacy','Document Privacy Inspector','Inspect Office files for hidden information and clear supported document properties.','Privacy & Security',['privacy','office','docx','xlsx','pptx','metadata','documents'],{featured:true,new:true}),
+  tool('calendar-privacy','Calendar Privacy Exporter','Share a finite busy-time snapshot without meeting details or account connections.','Privacy & Security',['privacy','calendar','ics','availability','busy','sharing'],{new:true}),
+  tool('synthetic-data','Synthetic Dataset Generator','Generate repeatable fake CSV / JSON datasets with linked tables.','Generators',['synthetic','dataset','csv','json','test','fixtures','generator'],{new:true}),
+  tool('qr-toolkit','QR Toolkit','Create text, Wi-Fi and contact QR codes, or read QR images locally.','Generators',['qr','qrcode','wifi','contact','image','decode','generator'],{new:true}),
 ];
 
 export const TOOL_BY_SLUG = new Map(TOOLS.map(item => [item.slug, item]));

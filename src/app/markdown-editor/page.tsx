@@ -18,9 +18,9 @@ export default function MarkdownEditorPage() {
   };
 
   return <LocalToolLayout title='Markdown Editor' description='Edit Markdown locally with a live preview. Marked renders the Markdown and DOMPurify sanitizes the resulting HTML before it reaches the page.'>
-    <section className='mx-auto grid max-w-7xl gap-4 md:grid-cols-2'>
-      <div className='flex min-h-[60vh] flex-col'><h2 className='rounded-t border bg-slate-100 p-2 font-semibold'>Markdown</h2><textarea aria-label='Markdown input' value={markdown} onChange={e => updateMarkdown(e.target.value)} className='min-h-0 flex-1 rounded-b border p-4 font-mono'/></div>
-      <div className='flex min-h-[60vh] flex-col'><div className='flex items-center justify-between rounded-t border bg-slate-100 p-2'><h2 className='font-semibold'>Sanitized preview</h2><button onClick={() => navigator.clipboard.writeText(html)} className='rounded border bg-white px-3 py-1 text-xs'>Copy HTML</button></div><div className='prose max-w-none min-h-0 flex-1 overflow-auto rounded-b border bg-white p-4' dangerouslySetInnerHTML={{ __html: html }}/></div>
+    <section className='mx-auto grid w-full min-w-0 gap-4 md:grid-cols-2'>
+      <div className='flex min-h-[60vh] flex-col'><h2 className='rounded-t border bg-slate-100 dark:bg-slate-800 p-2 font-semibold'>Markdown</h2><textarea aria-label='Markdown input' value={markdown} onChange={e => updateMarkdown(e.target.value)} className='min-h-0 flex-1 rounded-b border p-4 font-mono'/></div>
+      <div className='flex min-h-[60vh] flex-col'><div className='flex items-center justify-between rounded-t border bg-slate-100 dark:bg-slate-800 p-2'><h2 className='font-semibold'>Sanitized preview</h2><button onClick={() => navigator.clipboard.writeText(html)} className='rounded border bg-white dark:bg-slate-900 px-3 py-1 text-xs'>Copy HTML</button></div><div className='prose max-w-none min-h-0 flex-1 overflow-auto rounded-b border bg-white dark:bg-slate-900 p-4' dangerouslySetInnerHTML={{ __html: html }}/></div>
     </section>
   </LocalToolLayout>;
 }

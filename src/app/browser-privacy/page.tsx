@@ -33,9 +33,9 @@ export default function BrowserPrivacyPage() {
   }, []);
 
   return <LocalToolLayout title='Browser Privacy Inspector' description='See common information a webpage can read from your browser. ToolStack does not transmit these results.'>
-    <section className='mx-auto max-w-4xl rounded-xl bg-white p-6 shadow'>
-      <p className='mb-5 rounded border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900'>These values are read locally from browser APIs. The tool intentionally does not create or send a fingerprint.</p>
-      <dl className='grid gap-3 sm:grid-cols-[12rem_1fr]'>{rows.map(([key, value]) => <div key={key} className='contents'><dt className='font-semibold text-slate-700'>{key}</dt><dd className='break-all font-mono text-sm'>{value}</dd></div>)}</dl>
+    <section className='mx-auto w-full min-w-0 rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
+      <p className='mb-5 rounded border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950 p-3 text-sm text-sky-900 dark:text-sky-200'>These values are read locally from browser APIs. The tool intentionally does not create or send a fingerprint.</p>
+      <dl className='grid gap-3 sm:grid-cols-[12rem_1fr]'>{rows.map(([key, value]) => <div key={key} className='contents'><dt className='font-semibold text-slate-700 dark:text-slate-200'>{key}</dt><dd className='break-all font-mono text-sm'>{value}</dd></div>)}</dl>
     </section>
   </LocalToolLayout>;
 }
