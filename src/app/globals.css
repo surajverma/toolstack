@@ -6,7 +6,7 @@
   --font-heading: var(--font-inter), Arial, sans-serif;
 }
 
-:root { color-scheme: light; --page: #f8fafc; --surface: #ffffff; --ink: #334155; --line: #cbd5e1; }
+:root { color-scheme: light; --font-inter: 'Inter Variable'; --page: #f8fafc; --surface: #ffffff; --ink: #334155; --line: #cbd5e1; }
 :root[data-theme=dark] { color-scheme: dark; --page: #020617; --surface: #0f172a; --ink: #e2e8f0; --line: #475569; }
 
 @layer base {
