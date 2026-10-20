@@ -144,25 +144,25 @@ export default function RegexGeneratorPage() {
   };
 
   return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
+    <div className='flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950'>
       <Navbar />
       <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
+      <main id='main-content' className='flex-grow page-shell px-4 py-8'>
         <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>Easy Regex Generator</h1>
-          <p className='text-lg text-slate-600 mt-1'>
+          <h1 className='text-4xl font-bold text-slate-800 dark:text-slate-100'>Easy Regex Generator</h1>
+          <p className='text-lg text-slate-600 dark:text-slate-300 mt-1'>
             Build a regular expression by choosing what you need from the list below.
           </p>
         </header>
 
-        <section className='bg-white p-6 md:p-8 rounded-lg shadow-xl max-w-2xl mx-auto'>
+        <section className='bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-xl max-w-2xl mx-auto'>
           {/* The "Sentence Builder" with two dropdowns */}
-          <div className='flex items-center justify-center flex-wrap gap-x-3 gap-y-2 mb-8 bg-slate-50 p-6 rounded-lg border'>
-            <span className='text-lg text-slate-700'>I want to...</span>
+          <div className='flex items-center justify-center flex-wrap gap-x-3 gap-y-2 mb-8 bg-slate-50 dark:bg-slate-950 p-6 rounded-lg border'>
+            <span className='text-lg text-slate-700 dark:text-slate-200'>I want to...</span>
             <select
               value={actionKey}
               onChange={handleActionChange}
-              className='text-lg bg-white border border-slate-300 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'>
+              className='text-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'>
               {Object.entries(REGEX_LIBRARY).map(([key, { label }]) => (
                 <option key={key} value={key}>
                   {label}
@@ -172,7 +172,7 @@ export default function RegexGeneratorPage() {
             <select
               value={patternValue}
               onChange={handlePatternChange}
-              className='text-lg bg-white border border-slate-300 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'>
+              className='text-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'>
               {REGEX_LIBRARY[actionKey].patterns.map((pattern) => (
                 <option key={pattern.value} value={pattern.value}>
                   {pattern.label}
@@ -184,27 +184,27 @@ export default function RegexGeneratorPage() {
           {/* Output Section */}
           <div className='space-y-6'>
             <div>
-              <label className='block text-sm font-medium text-slate-700'>Generated Regex</label>
+              <label className='block text-sm font-medium text-slate-700 dark:text-slate-200'>Generated Regex</label>
               <div className='mt-1 relative'>
-                <pre className='w-full p-4 border border-slate-200 rounded-lg bg-slate-100 font-mono text-slate-800 overflow-x-auto'>
+                <pre className='w-full p-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-slate-800 dark:text-slate-100 overflow-x-auto'>
                   <code>{selectedPattern.regex.toString()}</code>
                 </pre>
                 <button
                   onClick={() => handleCopy(selectedPattern.regex.toString())}
-                  className='absolute top-3 right-3 px-3 py-1 text-xs font-medium text-slate-600 bg-white rounded-md border border-slate-300 hover:bg-slate-100'>
+                  className='absolute top-3 right-3 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'>
                   Copy
                 </button>
               </div>
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-slate-700'>Description</label>
-              <p className='mt-1 text-slate-600 p-4 border border-slate-200 rounded-lg bg-slate-100'>
+              <label className='block text-sm font-medium text-slate-700 dark:text-slate-200'>Description</label>
+              <p className='mt-1 text-slate-600 dark:text-slate-300 p-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-100 dark:bg-slate-800'>
                 {selectedPattern.description}
               </p>
             </div>
 
-            {copySuccess && <p className='text-center text-sm text-green-600'>{copySuccess}</p>}
+            {copySuccess && <p className='text-center text-sm text-green-600 dark:text-green-400'>{copySuccess}</p>}
 
             <div className='pt-4 text-center'>
               <Link
@@ -220,7 +220,7 @@ export default function RegexGeneratorPage() {
         </section>
 
         <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
+          <Link href='/' className='text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:underline'>
             &larr; Back to All Tools
           </Link>
         </div>

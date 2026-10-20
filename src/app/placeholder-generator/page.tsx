@@ -20,13 +20,14 @@ interface SettingInputProps {
 
 const SettingInput = ({ label, type = 'text', value, onChange, placeholder, className }: SettingInputProps) => (
   <div>
-    <label className='block text-sm font-medium text-slate-600 mb-1'>{label}</label>
+    <label htmlFor={`placeholder-${label.toLowerCase().replaceAll(' ', '-')}`} className='block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1'>{label}</label>
     <input
+      id={`placeholder-${label.toLowerCase().replaceAll(' ', '-')}`}
       type={type}
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className={`block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out ${className}`}
+      className={`block w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out ${className}`}
     />
   </div>
 );
@@ -49,17 +50,19 @@ interface ColorSettingInputProps {
 
 const ColorSettingInput = ({ label, value, onChange }: ColorSettingInputProps) => (
   <div>
-    <label className='block text-sm font-medium text-slate-600 mb-1'>{label}</label>
+    <label htmlFor={`placeholder-${label.toLowerCase().replaceAll(' ', '-')}`} className='block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1'>{label}</label>
     <div className='flex items-center rounded-md shadow-sm'>
       <input
         type='text'
+        id={`placeholder-${label.toLowerCase().replaceAll(' ', '-')}`}
         value={value}
         onChange={onChange}
         placeholder='e.g., cccccc'
-        className='block w-full p-2 border border-slate-300 rounded-l-md focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out'
+        className='block w-full p-2 border border-slate-300 dark:border-slate-700 rounded-l-md focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out'
       />
       <input
         type='color'
+        aria-label={`${label} picker`}
         value={formatColor(value)}
         onChange={(e) => {
           const event = {
@@ -69,7 +72,7 @@ const ColorSettingInput = ({ label, value, onChange }: ColorSettingInputProps) =
           } as ChangeEvent<HTMLInputElement>;
           onChange(event);
         }}
-        className='h-10 w-12 p-1 border border-l-0 border-slate-300 rounded-r-md cursor-pointer bg-white'
+        className='h-10 w-12 p-1 border border-l-0 border-slate-300 dark:border-slate-700 rounded-r-md cursor-pointer bg-white dark:bg-slate-900'
       />
     </div>
   </div>
@@ -185,21 +188,21 @@ export default function PlaceholderGeneratorPage() {
   };
 
   return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
+    <div className='flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950'>
       <Navbar />
       <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
+      <main id='main-content' className='flex-grow page-shell px-4 py-8'>
         <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>Placeholder Image Generator</h1>
-          <p className='text-lg text-slate-600 mt-1'>
+          <h1 className='text-4xl font-bold text-slate-800 dark:text-slate-100'>Placeholder Image Generator</h1>
+          <p className='text-lg text-slate-600 dark:text-slate-300 mt-1'>
             Create custom placeholder images for your mockups, generated entirely in your browser.
           </p>
         </header>
 
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto'>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-8 w-full min-w-0 mx-auto'>
           {/* Controls */}
-          <section className='md:col-span-1 bg-white p-6 rounded-lg shadow-xl h-fit'>
-            <h2 className='text-xl font-semibold text-slate-700 border-b pb-2 mb-4'>Settings</h2>
+          <section className='md:col-span-1 bg-white dark:bg-slate-900 p-6 rounded-lg shadow-xl h-fit'>
+            <h2 className='text-xl font-semibold text-slate-700 dark:text-slate-200 border-b pb-2 mb-4'>Settings</h2>
             <div className='space-y-4'>
               <div className='grid grid-cols-2 gap-4'>
                 <SettingInput
@@ -231,9 +234,9 @@ export default function PlaceholderGeneratorPage() {
           </section>
 
           {/* Preview */}
-          <section className='md:col-span-2 bg-white p-6 rounded-lg shadow-xl'>
-            <h2 className='text-xl font-semibold text-slate-700 border-b pb-2 mb-4'>Preview</h2>
-            <div className='flex justify-center items-center bg-slate-100 rounded-md p-4 min-h-[200px]'>
+          <section className='md:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-lg shadow-xl'>
+            <h2 className='text-xl font-semibold text-slate-700 dark:text-slate-200 border-b pb-2 mb-4'>Preview</h2>
+            <div className='flex justify-center items-center bg-slate-100 dark:bg-slate-800 rounded-md p-4 min-h-[200px]'>
               <canvas ref={canvasRef} style={{ display: 'none' }} />
               {/* FIX: Replaced <img> with next/image <Image> */}
               {imageUrl && (
@@ -247,7 +250,7 @@ export default function PlaceholderGeneratorPage() {
               )}
             </div>
             <div className='mt-4'>
-              <label htmlFor='image-url' className='block text-sm font-medium text-slate-600 mb-1'>
+              <label htmlFor='image-url' className='block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1'>
                 Generated Data URL
               </label>
               <div className='flex rounded-md shadow-sm'>
@@ -256,21 +259,21 @@ export default function PlaceholderGeneratorPage() {
                   value={imageUrl}
                   readOnly
                   rows={3}
-                  className='block w-full flex-1 rounded-none rounded-l-md p-2 font-mono text-slate-700 bg-slate-50 border border-slate-300 text-xs'
+                  className='block w-full flex-1 rounded-none rounded-l-md p-2 font-mono text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs'
                 />
                 <button
                   onClick={handleCopyUrl}
-                  className='relative inline-flex items-center space-x-2 rounded-r-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500'>
+                  className='relative inline-flex items-center space-x-2 rounded-r-md border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500'>
                   Copy
                 </button>
               </div>
-              {copySuccess && <p className='mt-2 text-sm text-green-600'>{copySuccess}</p>}
+              {copySuccess && <p className='mt-2 text-sm text-green-600 dark:text-green-400'>{copySuccess}</p>}
             </div>
           </section>
         </div>
 
         <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
+          <Link href='/' className='text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:underline'>
             &larr; Back to All Tools
           </Link>
         </div>

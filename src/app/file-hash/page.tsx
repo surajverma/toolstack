@@ -47,7 +47,7 @@ export default function FileHashPage() {
       title='File Hash & Checksum'
       description='Generate SHA-256, SHA-384 and SHA-512 checksums locally using the Web Crypto API.'
     >
-      <section className='mx-auto max-w-4xl rounded-xl bg-white p-6 shadow'>
+      <section className='mx-auto w-full min-w-0 rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <input
           type='file'
           onChange={(event) => {
@@ -58,12 +58,12 @@ export default function FileHashPage() {
         />
 
         {file && (
-          <p className='mt-3 text-sm text-slate-600'>
+          <p className='mt-3 text-sm text-slate-600 dark:text-slate-300'>
             {file.name} · {(file.size / 1024).toFixed(1)} KB
           </p>
         )}
         {busy && <p className='mt-4'>Calculating hashes...</p>}
-        {error && <p className='mt-4 text-red-600'>{error}</p>}
+        {error && <p className='mt-4 text-red-600 dark:text-red-400'>{error}</p>}
 
         <div className='mt-4 space-y-3'>
           {Object.entries(hashes).map(([algorithm, value]) => (
@@ -96,7 +96,7 @@ export default function FileHashPage() {
               className='mt-1 w-full rounded border p-2 font-mono text-xs'
             />
             {match !== null && (
-              <p className={`mt-2 font-semibold ${match ? 'text-green-700' : 'text-red-700'}`}>
+              <p className={`mt-2 font-semibold ${match ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
                 {match ? 'Checksum matches.' : 'No generated checksum matches.'}
               </p>
             )}

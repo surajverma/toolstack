@@ -12,49 +12,31 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState<ToolCategory | null>(null);
   const q = searchTerm.trim().toLowerCase();
-
-  const filtered = useMemo(() => TOOLS.filter(tool => {
-    const matchesCategory = !category || tool.category === category;
-    const matchesSearch = !q
-      || tool.name.toLowerCase().includes(q)
-      || tool.description.toLowerCase().includes(q)
-      || tool.tags.some(value => value.toLowerCase().includes(q));
-    return matchesCategory && matchesSearch;
-  }), [category, q]);
-
-  const heading = category ?? (q ? 'Search results' : 'All tools');
-
-  return <div className='flex min-h-screen flex-col bg-slate-50'>
+  const filtered = useMemo(() => TOOLS.filter(tool => (!category || tool.category === category) && (!q || [tool.name, tool.description, ...tool.tags].some(value => value.toLowerCase().includes(q)))), [category, q]);
+  const browsing = !q && !category;
+  return <div className='flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950'>
     <Navbar/>
-    <main className='container mx-auto flex-grow px-4 py-10'>
-      <header className='mx-auto mb-10 max-w-4xl text-center'>
-        <h1 className='text-5xl font-extrabold tracking-tight text-slate-950'>Tool<span className='text-sky-600'>Stack</span></h1>
-        <p className='mx-auto mt-4 max-w-3xl text-xl font-medium text-slate-600'>Useful tools with one simple privacy rule: your working data stays on your device.</p>
-        <div className='mt-5'><PrivacyBadge/></div>
+    <main id='main-content' className='page-shell flex-grow px-4 py-8 sm:py-10'>
+      <header className='mx-auto max-w-3xl text-center'>
+        <h1 className='text-4xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100 sm:text-5xl'>Tool<span className='text-sky-600 dark:text-sky-300'>Stack</span></h1>
+        <p className='mt-3 text-lg text-slate-600 dark:text-slate-300'>Privacy-first browser tools. Your data stays on your device.</p>
+        <div className='mt-4'><PrivacyBadge/></div>
+        <div className='mt-6'><SearchBar onSearch={setSearchTerm}/></div>
       </header>
 
-      <section className='mx-auto mb-8 max-w-4xl'><SearchBar onSearch={setSearchTerm}/></section>
-
-      <section className='mb-8 grid gap-3 sm:grid-cols-3'>
-        <div className='rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center'><strong className='text-emerald-900'>No uploads</strong><p className='mt-1 text-sm text-emerald-800'>Files and text are processed in the browser.</p></div>
-        <div className='rounded-xl border border-sky-100 bg-sky-50 p-4 text-center'><strong className='text-sky-900'>No account or tracking</strong><p className='mt-1 text-sm text-sky-800'>No sign-in is required to use the utilities.</p></div>
-        <div className='rounded-xl border border-slate-200 bg-white p-4 text-center'><strong className='text-slate-900'>Offline-friendly</strong><p className='mt-1 text-sm text-slate-600'>Previously visited tools can reopen from the PWA cache.</p></div>
-      </section>
-
-      <section className='mb-10 rounded-xl border border-slate-200 bg-white p-5 shadow-sm' aria-label='Tool categories'>
-        <div className='flex flex-wrap justify-center gap-2'>
-          <button onClick={() => setCategory(null)} className={`rounded-full px-4 py-2 text-sm font-semibold ${category === null ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>All</button>
-          {TOOL_CATEGORIES.map(item => <button key={item} onClick={() => setCategory(item)} className={`rounded-full px-4 py-2 text-sm font-semibold ${category === item ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>{item}</button>)}
+      <section id='tools' className='mt-10 scroll-mt-6' aria-label='Tool directory'>
+        <label className='mb-6 block text-sm font-semibold sm:hidden'>Category<select className='field mt-2' value={category ?? ''} onChange={event => setCategory(event.target.value ? event.target.value as ToolCategory : null)}><option value=''>All tools ({TOOLS.length})</option>{TOOL_CATEGORIES.map(item => <option key={item} value={item}>{item} ({TOOLS.filter(tool => tool.category === item).length})</option>)}</select></label>
+        <div className='mb-7 hidden flex-wrap gap-2 sm:flex' aria-label='Filter by category'>
+          <button aria-pressed={category === null} onClick={() => setCategory(null)} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${category === null ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-sky-400'}`}>All <span className='ml-1 opacity-75'>{TOOLS.length}</span></button>
+          {TOOL_CATEGORIES.map(item => <button key={item} aria-pressed={category === item} onClick={() => setCategory(item)} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${category === item ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-sky-400'}`}>{item}<span className='ml-1.5 opacity-75'>{TOOLS.filter(tool => tool.category === item).length}</span></button>)}
         </div>
-      </section>
-
-      <section>
-        <div className='mb-5 flex flex-wrap items-baseline justify-between gap-2'>
-          <h2 className='text-2xl font-bold text-slate-900'>{heading}</h2>
-          <span className='text-sm text-slate-500'>{filtered.length} tool{filtered.length === 1 ? '' : 's'}</span>
-        </div>
-        <ToolList tools={filtered}/>
-        {filtered.length === 0 && <div className='rounded-lg bg-white p-8 text-center shadow'><p className='text-slate-500'>No tools found matching your search.</p></div>}
+        {browsing ? <>
+          <div id='all-tools' className='scroll-mt-6 space-y-10'>{TOOL_CATEGORIES.map(item => <section key={item} aria-label={item}><div className='mb-4 flex items-center gap-3'><h2 className='text-xl font-bold text-slate-900 dark:text-slate-100'>{item}</h2><span className='text-sm text-slate-500 dark:text-slate-400'>{TOOLS.filter(tool => tool.category === item).length} tools</span></div><ToolList tools={TOOLS.filter(tool => tool.category === item)}/></section>)}</div>
+        </> : <>
+          <div className='mb-5 flex flex-wrap items-baseline justify-between gap-2'><h2 className='text-2xl font-bold text-slate-900 dark:text-slate-100'>{q ? 'Search results' : category}</h2><p role='status' className='text-sm text-slate-500 dark:text-slate-400'>{filtered.length} tool{filtered.length === 1 ? '' : 's'}</p></div>
+          <ToolList tools={filtered}/>
+          {filtered.length === 0 && <div className='panel text-center'><p>No tools found. Try a shorter search or choose another category.</p></div>}
+        </>}
       </section>
     </main>
     <Footer/>

@@ -1,111 +1,122 @@
-// src/app/text-diff/page.tsx
 'use client';
-
-import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
-import * as Diff from 'diff';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import DiffEditors,{ type DiffEditorHandle } from '@/components/DiffEditors';
+import { DEFAULT_COMPARE,checkDiffInput,decodeDiffFile,encodeDiffFile,type CompareMode,type CompareOptions,type CompareResult } from '@/lib/file-diff-types';
+import { buildDiffReport } from '@/lib/diff-report';
+import { visibleDiffText } from '@/lib/file-diff';
+import { downloadLocal } from '@/lib/local-files';
 
-// Define some sample text to start with
-const SAMPLE_TEXT_A = `The quick brown fox jumps over the lazy dog.
-It was the best of times, it was the worst of times.
-A stitch in time saves nine.`;
+const EXAMPLES: Record<CompareMode,[string,string]> = {
+  text: ['The quick brown fox jumps over the lazy dog.\nIt was the best of times, it was the worst of times.\nA stitch in time saves nine.\n','The quick brown cat jumps over the lazy dog.\nIt was the best of times, it was the blurst of times.\nA stitch in time saves nine.\nThis is a new line.\n'],
+  json: [JSON.stringify([{ id: 1,email: 'first@example.invalid',active: true },{ id: 2,email: 'second@example.invalid',active: false }],null,2),JSON.stringify([{ id: 2,email: 'second@example.invalid',active: true },{ id: 1,email: 'updated@example.invalid',active: true }],null,2)],
+  csv: ['id,email,active\n1,first@example.invalid,true\n2,second@example.invalid,false\n','id,email,active\n2,second@example.invalid,true\n1,updated@example.invalid,true\n'],
+  env: ['API_KEY=example-old-token\nTIMEOUT=30\nRETRIES=3\nAUTH_ENABLED=true\n','RETRIES=5\nTIMEOUT=60\nAPI_KEY=example-new-token\nAUTH_ENABLED=false\n'],
+};
+const ACCEPT = '.txt,.md,.json,.csv,.ts,.tsx,.js,.jsx,.yml,.yaml,.env,.xml,.log,.css,.html,.sql,.py,.sh,.ini,.toml';
+const fieldList = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean);
+const MODES: Record<CompareMode,string> = { text: 'Text / code',json: 'JSON',csv: 'CSV',env: '.env' };
 
-const SAMPLE_TEXT_B = `The quick brown cat jumps over the lazy dog.
-It was the best of times, it was the blurst of times.
-A stitch in time saves nine.
-This is a new line.`;
+export default function FileDiffPage() {
+  const [left,setLeft] = useState(EXAMPLES.text[0]); const [right,setRight] = useState(EXAMPLES.text[1]); const [options,setOptions] = useState<CompareOptions>({ ...DEFAULT_COMPARE });
+  const [drafts,setDrafts] = useState({ keys: '',ignoreLiterals: '',redactions: '',ignorePaths: '',expectedPaths: '' });
+  const [visibleCount,setVisibleCount] = useState(100);
+  const [syntax,setSyntax] = useState<'plain' | 'javascript' | 'json'>('plain');
+  const [view,setView] = useState<'source' | 'review'>('source'); const [wrap,setWrap] = useState(false); const [collapse,setCollapse] = useState(false); const [spaces,setSpaces] = useState(false); const [mobileSide,setMobileSide] = useState<'a' | 'b'>('a'); const [direction,setDirection] = useState<'a-to-b' | 'b-to-a'>('a-to-b');
+  const [status,setStatus] = useState<{ count: number; precise: boolean }>({ count: 0,precise: true });
+  const [state,setState] = useState<{ signature: object; result?: CompareResult; error?: string } | null>(null); const [selected,setSelected] = useState<string[]>([]); const [showIgnored,setShowIgnored] = useState(false); const [onlyUnexpected,setOnlyUnexpected] = useState(false); const [includeContext,setIncludeContext] = useState(false); const [reportOpen,setReportOpen] = useState(false); const [message,setMessage] = useState(''); const [patchBusy,setPatchBusy] = useState(false); const [reading,setReading] = useState(false);
+  const [names,setNames] = useState({ a: '',b: '' }); const [encodings,setEncodings] = useState<{ a: 'utf-8' | 'utf-16le' | 'utf-16be'; b: 'utf-8' | 'utf-16le' | 'utf-16be' }>({ a: 'utf-8',b: 'utf-8' });
+  const sourceRef = useRef<DiffEditorHandle>(null); const reviewRef = useRef<DiffEditorHandle>(null); const worker = useRef<Worker | null>(null); const patchWorker = useRef<Worker | null>(null); const patchTimer = useRef<ReturnType<typeof setTimeout> | null>(null); const active = useRef(true); const fileA = useRef<HTMLInputElement>(null); const fileB = useRef<HTMLInputElement>(null);
+  const signature = useMemo(() => ({ left,right,options }),[left,right,options]); const result = state?.signature === signature ? state.result : undefined; const error = state?.signature === signature ? state.error : undefined;
+  const sourceStatus = useCallback((count: number,precise: boolean) => setStatus(previous => previous.count === count && previous.precise === precise ? previous : { count,precise }),[]);
+  const onError = useCallback((value: string) => setMessage(value),[]);
+  const invalidate = () => { setReportOpen(false); setMessage(''); };
+  const change = useCallback((side: 'a' | 'b',value: string) => { setReportOpen(false); setMessage(''); if (side === 'a') setLeft(value); else setRight(value); },[]);
+  const configure = (update: Partial<CompareOptions>) => { invalidate(); setOptions(previous => ({ ...previous,...update })); };
+  const editRules = (key: keyof typeof drafts,value: string) => { setDrafts(previous => ({ ...previous,[key]: value })); configure({ [key]: key === 'keys' ? fieldList(value) : value.split('\n').map(line => key === 'ignorePaths' || key === 'expectedPaths' ? line.trim() : line).filter(line => line.trim()) }); };
+  useEffect(() => { active.current = true; return () => { active.current = false; patchWorker.current?.terminate(); if (patchTimer.current) clearTimeout(patchTimer.current); }; },[]);
+  useEffect(() => {
+    let deadline: ReturnType<typeof setTimeout> | undefined;
+    const delay = setTimeout(() => {
+      try {
+        const next = new Worker(new URL('../../lib/file-diff.worker.ts',import.meta.url)); worker.current = next;
+        deadline = setTimeout(() => { next.terminate(); setState({ signature,error: 'Comparison took too long. Use a smaller section or simpler rules. No partial result was produced.' }); },8000);
+        next.onmessage = (event: MessageEvent<{ result?: CompareResult; error?: string }>) => { if (deadline) clearTimeout(deadline); next.terminate(); if (worker.current !== next) return; setState({ signature,...event.data }); setSelected(event.data.result?.entries.filter(entry => !entry.ignored).map(entry => entry.id) ?? []); setVisibleCount(100); };
+        next.onerror = () => { if (deadline) clearTimeout(deadline); next.terminate(); if (worker.current === next) setState({ signature,error: 'The comparison worker could not complete. Reload and try again.' }); };
+        next.postMessage({ before: signature.left,after: signature.right,options: signature.options });
+      } catch { setState({ signature,error: 'Could not start local comparison in this browser.' }); }
+    },350);
+    return () => { clearTimeout(delay); if (deadline) clearTimeout(deadline); worker.current?.terminate(); worker.current = null; };
+  },[signature]);
+  const load = async (side: 'a' | 'b',file: File) => {
+    if (reading) return; invalidate(); setReading(true);
+    try { if (file.size > 1024 * 1024) throw new Error('Use text files up to 1 MB each.'); const bytes = new Uint8Array(await file.arrayBuffer()); const text = decodeDiffFile(bytes); if (!active.current) return; const encoding = bytes[0] === 0xff && bytes[1] === 0xfe ? 'utf-16le' : bytes[0] === 0xfe && bytes[1] === 0xff ? 'utf-16be' : 'utf-8'; change(side,text); setNames(previous => ({ ...previous,[side]: file.name })); setEncodings(previous => ({ ...previous,[side]: encoding })); }
+    catch (err) { if (active.current) setMessage((err as Error).message); } finally { if (active.current) setReading(false); }
+  };
+  const patch = () => {
+    setPatchBusy(true); setMessage(''); const snapshot = { left,right };
+    try { const next = new Worker(new URL('../../lib/file-diff.worker.ts',import.meta.url)); patchWorker.current = next;
+      const stop = () => { next.terminate(); if (patchTimer.current) clearTimeout(patchTimer.current); patchWorker.current = null; setPatchBusy(false); };
+      patchTimer.current = setTimeout(() => { stop(); setMessage('Patch creation took too long. Try smaller source files.'); },8000);
+      next.onmessage = (event: MessageEvent<{ patch?: string; error?: string }>) => { stop(); if (event.data.error) setMessage(event.data.error); else if (event.data.patch !== undefined) downloadLocal(event.data.patch,'changes.diff','text/x-diff;charset=utf-8'); };
+      next.onerror = () => { stop(); setMessage('Could not create a patch.'); }; next.postMessage({ action: 'patch',before: snapshot.left,after: snapshot.right });
+    } catch { setPatchBusy(false); setMessage('Could not start patch creation.'); }
+  };
+  const report = useMemo(() => { if (!reportOpen || !result || !selected.length) return null; try { return buildDiffReport(result,selected,includeContext); } catch { return null; } },[reportOpen,result,selected,includeContext]);
+  const entries = result?.entries.filter(entry => (showIgnored || !entry.ignored) && (!onlyUnexpected || entry.expected === false)) ?? [];
+  const editor = view === 'source' ? sourceRef : reviewRef;
+  const example = () => { invalidate(); setLeft(EXAMPLES[options.mode][0]); setRight(EXAMPLES[options.mode][1]); setNames({ a: '',b: '' }); setEncodings({ a: 'utf-8',b: 'utf-8' }); setDrafts({ keys: options.mode === 'json' || options.mode === 'csv' ? 'id' : '',expectedPaths: options.mode === 'env' ? '/TIMEOUT\n/RETRIES' : '',ignorePaths: '',ignoreLiterals: '',redactions: '' }); setOptions(previous => ({ ...DEFAULT_COMPARE,mode: previous.mode,keys: previous.mode === 'json' || previous.mode === 'csv' ? ['id'] : [],expectedPaths: previous.mode === 'env' ? ['/TIMEOUT','/RETRIES'] : [] })); };
+  const reset = () => { invalidate(); setLeft(''); setRight(''); setNames({ a: '',b: '' }); setEncodings({ a: 'utf-8',b: 'utf-8' }); setSelected([]); };
 
-export default function TextDiffPage() {
-  const [textA, setTextA] = useState(SAMPLE_TEXT_A);
-  const [textB, setTextB] = useState(SAMPLE_TEXT_B);
-
-  const diffResult = useMemo(() => {
-    // Using diffLines for better performance with multi-line text
-    return Diff.diffLines(textA, textB);
-  }, [textA, textB]);
-
-  return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
-      <Navbar />
-      <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
-        <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>Text Difference Checker</h1>
-          <p className='text-lg text-slate-600 mt-1'>Compare two blocks of text and highlight the differences.</p>
-        </header>
-
-        {/* Input Text Areas */}
-        <section className='grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto'>
-          <div>
-            <label htmlFor='text-a' className='block text-sm font-semibold text-slate-700 mb-1'>
-              Original Text
-            </label>
-            <textarea
-              id='text-a'
-              value={textA}
-              onChange={(e) => setTextA(e.target.value)}
-              className='w-full p-3 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out shadow-sm'
-              rows={12}
-              placeholder='Paste the first version of your text here...'
-            />
-          </div>
-          <div>
-            <label htmlFor='text-b' className='block text-sm font-semibold text-slate-700 mb-1'>
-              Changed Text
-            </label>
-            <textarea
-              id='text-b'
-              value={textB}
-              onChange={(e) => setTextB(e.target.value)}
-              className='w-full p-3 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out shadow-sm'
-              rows={12}
-              placeholder='Paste the second version of your text here...'
-            />
-          </div>
-        </section>
-
-        {/* Diff Results */}
-        <section className='bg-white p-6 md:p-8 rounded-lg shadow-xl max-w-6xl mx-auto mt-8'>
-          <h2 className='text-xl font-semibold text-slate-700 border-b pb-2 mb-4'>Differences</h2>
-          <pre className='text-sm whitespace-pre-wrap font-mono bg-slate-50 p-4 rounded-md overflow-x-auto'>
-            {diffResult.map((part, index) => {
-              const color = part.added
-                ? 'bg-green-100 text-green-800'
-                : part.removed
-                ? 'bg-red-100 text-red-800'
-                : 'text-slate-500';
-
-              const prefix = part.added ? '+ ' : part.removed ? '- ' : '  ';
-
-              return (
-                <span key={index} className={`${color} block`}>
-                  {/* We split by newline to add the prefix to each line */}
-                  {part.value.split('\n').map((line, i, arr) => {
-                    // Don't render the final empty line from a split
-                    if (i === arr.length - 1 && line === '') return null;
-                    return (
-                      <span key={i} className='block'>
-                        {prefix}
-                        {line}
-                      </span>
-                    );
-                  })}
-                </span>
-              );
-            })}
-          </pre>
-        </section>
-
-        <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
-            &larr; Back to All Tools
-          </Link>
+  return <div className='flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950'><Navbar/><Breadcrumbs/>
+    <main id='main-content' className='page-shell flex-1 px-4 pb-8'>
+      <header className='mb-5 flex flex-wrap items-baseline justify-between gap-2'><h1 className='text-2xl font-bold text-slate-950 dark:text-slate-100'>Text &amp; File Diff</h1><span className='text-xs text-emerald-700 dark:text-emerald-300'>Local processing · no uploads · nothing saved</span></header>
+      <div className='mb-3 flex flex-wrap items-center gap-2'>
+        <div className='mr-auto flex gap-1' aria-label='Comparison workspace'>{(['source','review'] as const).map(item => <button key={item} className={`action text-sm ${view === item ? '' : 'action-secondary'}`} aria-pressed={view === item} onClick={() => { setView(item); setMessage(''); }}>{item === 'source' ? 'Edit & compare' : 'Private review'}</button>)}</div>
+        <button className='action action-secondary text-sm' onClick={example}>Load example</button><button className='action action-secondary text-sm' onClick={() => { invalidate(); setLeft(right); setRight(left); setNames({ a: names.b,b: names.a }); setEncodings({ a: encodings.b,b: encodings.a }); }}>Swap</button><button className='action action-secondary text-sm' onClick={reset}>Clear</button>
+      </div>
+      <section className='overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900' aria-label='File comparison workspace'>
+        <div className='diff-toolbar flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-slate-200 px-3 py-2 text-xs dark:border-slate-700'>
+          <button aria-label='Previous difference' title='Previous difference' className='diff-icon' onClick={() => editor.current?.previous(mobileSide)}>↑</button><button aria-label='Next difference' title='Next difference' className='diff-icon' onClick={() => editor.current?.next(mobileSide)}>↓</button>
+          <label className='flex items-center gap-1.5'><input type='checkbox' checked={wrap} onChange={event => setWrap(event.target.checked)}/>Wrap</label><label className='flex items-center gap-1.5'><input type='checkbox' checked={collapse} onChange={event => setCollapse(event.target.checked)}/>Fold unchanged</label><label className='flex items-center gap-1.5'><input type='checkbox' checked={spaces} onChange={event => setSpaces(event.target.checked)}/>Show spaces</label>
+          {view === 'source' && <label className='hidden items-center gap-1.5 md:flex'>Merge<select aria-label='Merge direction' className='rounded border border-slate-300 px-1 py-1 dark:border-slate-700' value={direction} onChange={event => setDirection(event.target.value as typeof direction)}><option value='a-to-b'>Left → right</option><option value='b-to-a'>Right → left</option></select></label>}
+          {view === 'review' && <label className='flex items-center gap-1.5'><input type='checkbox' checked={showIgnored} onChange={event => { setShowIgnored(event.target.checked); setReportOpen(false); }}/>Show ignored changes</label>}
+          <span className='ml-auto text-slate-500 dark:text-slate-400'>{view === 'source' ? `${status.count} text blocks` : 'Masked · read only'}</span>
         </div>
-      </main>
-      <Footer />
-    </div>
-  );
+        <div className='grid grid-cols-2 border-b border-slate-200 dark:border-slate-700'>{(['a','b'] as const).map(side => <div className='min-w-0 px-3 py-2' key={side} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const file = event.dataTransfer.files[0]; if (file && view === 'source') void load(side,file); }}><div className='flex flex-wrap items-center gap-2'><span className='mr-auto text-sm font-semibold'>{side === 'a' ? 'Original' : 'Changed'}</span>{view === 'source' && <><button aria-label={`Undo ${side === 'a' ? 'original' : 'changed'} editor`} className='diff-icon' title='Undo' onClick={() => sourceRef.current?.undo(side)}>↶</button><button aria-label={`Redo ${side === 'a' ? 'original' : 'changed'} editor`} className='diff-icon' title='Redo' onClick={() => sourceRef.current?.redo(side)}>↷</button><button className='text-xs font-semibold text-sky-700 dark:text-sky-300' disabled={reading} onClick={() => (side === 'a' ? fileA : fileB).current?.click()}>Open file</button><input ref={side === 'a' ? fileA : fileB} className='hidden' type='file' aria-label={`Open ${side === 'a' ? 'original' : 'changed'} file`} accept={ACCEPT} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void load(side,file); }}/></>}</div>{names[side] && view === 'source' && <p className='mt-1 truncate text-xs text-slate-500 dark:text-slate-400' title={names[side]}>{names[side]}</p>}</div>)}</div>
+        <div className='flex gap-2 border-b border-slate-200 p-2 md:hidden dark:border-slate-700'>{(['a','b'] as const).map(side => <button key={side} aria-pressed={mobileSide === side} className={'action px-3 py-1 text-xs ' + (mobileSide === side ? '' : 'action-secondary')} onClick={() => setMobileSide(side)}>{side === 'a' ? 'Original pane' : 'Changed pane'}</button>)}</div>
+        <div className={`diff-side-${mobileSide}`} hidden={view !== 'source'} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) event.preventDefault(); }} onDropCapture={event => { const file = event.dataTransfer.files[0]; if (!file) return; event.preventDefault(); event.stopPropagation(); const pane = (event.target as HTMLElement).closest('.cm-mergeViewEditor'); const side = pane?.querySelector('.cm-merge-b') ? 'b' : 'a'; void load(side,file); }}>
+          <DiffEditors ref={sourceRef} left={left} right={right} onChange={change} onError={onError} wrap={wrap} collapse={collapse} whitespace={spaces} sync direction={direction} mode={options.mode} syntax={syntax} onStatus={sourceStatus}/>
+        </div>
+        {view === 'review' && <div className={`diff-side-${mobileSide}`}>{result ? <DiffEditors ref={reviewRef} left={showIgnored ? result.exactLeft : result.left} right={showIgnored ? result.exactRight : result.right} onError={onError} readonly wrap={wrap} collapse={collapse} whitespace={spaces} sync direction={direction} mode='env'/> : <p className='p-8 text-center text-sm'>{error ? 'Fix the source or comparison rules to continue.' : 'Comparing locally…'}</p>}</div>}
+      </section>
+      <div className='my-3 flex flex-wrap items-start justify-between gap-2 text-xs text-slate-600 dark:text-slate-300'>
+        <p>{view === 'source' ? 'Edit either pane. Arrows copy exact changes; Ctrl/Cmd+Z undoes them. Review masks detected private values.' : 'Review uses comparison rules and shared aliases. Source files and source downloads are unchanged.'}</p>
+        {result && <p role='status' className='font-semibold'>{result.meaningful} {options.mode === 'text' ? 'change blocks' : 'field changes'} · {result.ignored} ignored{result.reordered ? ` · ${result.reordered} ${options.mode === 'text' ? 'exact block moves' : 'records reordered'}` : ''}{options.expectedPaths.length ? ` · ${result.expected} expected · ${result.unexpected} unexpected` : ''}</p>}
+      </div>
+      {!status.precise && view === 'source' && <p className='note my-3 text-sm'>Editor highlighting is simplified for this input. Private review still requires an exact, completed comparison.</p>}
+      {(error || message || reading) && <p role={error ? 'alert' : 'status'} className='note my-3'>{error || message || 'Reading locally…'}</p>}
+      <details className='panel my-4'><summary className='cursor-pointer text-sm font-semibold'>Comparison options</summary><div className='mt-4 space-y-4'>
+        <div className='grid gap-4 sm:grid-cols-3'><label className='text-sm font-semibold'>Compare as<select className='field mt-1' value={options.mode} onChange={event => { setDrafts(previous => ({ ...previous,keys: '',expectedPaths: '',ignorePaths: '' })); configure({ mode: event.target.value as CompareMode,keys: [],expectedPaths: [],ignorePaths: [] }); }}>{Object.entries(MODES).map(([value,label]) => <option value={value} key={value}>{label}</option>)}</select></label><label className='text-sm font-semibold'>Spaces / tabs<select className='field mt-1' value={options.whitespace} onChange={event => configure({ whitespace: event.target.value as CompareOptions['whitespace'] })}><option value='exact'>Compare exactly</option><option value='trim'>Ignore leading / trailing</option><option value='all'>Ignore all spaces / tabs</option></select></label>{options.mode === 'text' && <label className='text-sm font-semibold'>Code highlighting<select className='field mt-1' value={syntax} onChange={event => setSyntax(event.target.value as typeof syntax)}><option value='plain'>Plain text</option><option value='javascript'>JavaScript / TypeScript</option><option value='json'>JSON</option></select></label>}{options.mode === 'json' && <label className='text-sm font-semibold'>Absolute numeric tolerance<input className='field mt-1' type='number' min='0' step='any' value={options.numericTolerance} onChange={event => configure({ numericTolerance: Number(event.target.value) })}/></label>}</div>
+        <div className='flex flex-wrap gap-4 text-sm'>{([{ key: 'ignoreCase',label: 'Ignore string case' },{ key: 'ignoreEol',label: 'Ignore LF / CRLF style' },{ key: 'timestamps',label: 'Ignore ISO timestamps' },{ key: 'uuids',label: 'Ignore UUID values' }] as const).map(item => <label className='flex items-center gap-2' key={item.key}><input type='checkbox' checked={options[item.key]} onChange={event => configure({ [item.key]: event.target.checked })}/>{item.label}</label>)}</div>
+        {(options.mode === 'json' || options.mode === 'csv') && <label className='block text-sm font-semibold'>Match record arrays by key columns<input className='field mt-1' placeholder='id   or   region, id' value={drafts.keys} onChange={event => editRules('keys',event.target.value)}/><span className='mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400'>Blank means position. Duplicate or missing keys stop the comparison.</span></label>}
+        <div className='grid gap-4 md:grid-cols-2'><label className='text-sm font-semibold'>Ignore literal text, one value per line<textarea className='field mt-1 h-24 font-mono text-xs' value={drafts.ignoreLiterals} onChange={event => editRules('ignoreLiterals',event.target.value)}/></label><label className='text-sm font-semibold'>Additional private values, one per line<textarea className='field mt-1 h-24 font-mono text-xs' value={drafts.redactions} onChange={event => editRules('redactions',event.target.value)}/></label></div>
+        {options.mode !== 'text' && <div className='grid gap-4 md:grid-cols-2'><label className='text-sm font-semibold'>Ignore field paths<textarea className='field mt-1 h-24 font-mono text-xs' placeholder={'/generatedAt\n/*/lastSeen'} value={drafts.ignorePaths} onChange={event => editRules('ignorePaths',event.target.value)}/></label><label className='text-sm font-semibold'>Only these fields should change<textarea className='field mt-1 h-24 font-mono text-xs' placeholder={'/timeout\n/retries\n/*/email'} value={drafts.expectedPaths} onChange={event => editRules('expectedPaths',event.target.value)}/></label><p className='text-xs text-slate-500 dark:text-slate-400 md:col-span-2'>One JSON Pointer path per line. * matches one level; ** matches any depth. .env uses /KEY. Expected changes are checked against unignored fields; this does not validate program behavior.</p></div>}
+        <p className='text-xs text-slate-500 dark:text-slate-400'>Rules affect Review only. Source highlighting, merges and patches always use exact text. Up to 1 MB / 20,000 lines per side; UTF-8 and UTF-16 with a BOM. Binary and formatted Office/PDF files are unsupported.</p>
+        <button className='action action-secondary text-sm' onClick={() => { setDrafts({ keys: '',ignoreLiterals: '',redactions: '',ignorePaths: '',expectedPaths: '' }); configure({ ...DEFAULT_COMPARE,mode: options.mode }); }}>Reset comparison rules</button>
+      </div></details>
+      {result && <details className='panel my-4'><summary className='cursor-pointer text-sm font-semibold'>File details &amp; invisible characters</summary><div className='mt-4 grid gap-4 md:grid-cols-2'>{([{ label: 'Original',info: result.infoA },{ label: 'Changed',info: result.infoB }]).map(({ label,info }) => <section key={label} className='space-y-2 text-sm'><h2 className='font-bold'>{label}</h2><p>{info.lines.toLocaleString()} lines · {info.characters.toLocaleString()} UTF-16 units</p><p>LF {info.lf} · CRLF {info.crlf} · CR {info.cr} · final newline: {info.finalNewline ? 'yes' : 'no'} · BOM: {info.bom ? 'yes' : 'no'}</p>{info.unusual.length ? <ul className='list-inside list-disc text-xs'>{info.unusual.map(item => <li key={item.code}>{item.name} ({item.code}) × {item.count}; first at {item.line}:{item.column}</li>)}</ul> : <p>No listed hidden characters or common lookalikes found.</p>}</section>)}</div><p className='mt-3 text-xs text-slate-500 dark:text-slate-400'>Lookalike letters can be legitimate language characters. This list is illustrative, not a complete spoofing check.</p>{result.warnings.length > 0 && <ul className='mt-3 list-inside list-disc text-xs'>{result.warnings.map((warning,i) => <li key={i}>{warning}</li>)}</ul>}</details>}
+      {view === 'review' && result && <section className='panel space-y-4' aria-label='Review changes'>
+        <div className='flex flex-wrap items-center gap-3'><h2 className='mr-auto font-bold'>Changes to include</h2>{options.expectedPaths.length > 0 && <label className='flex items-center gap-2 text-xs'><input type='checkbox' checked={onlyUnexpected} onChange={event => setOnlyUnexpected(event.target.checked)}/>Unexpected only</label>}<button className='text-xs font-semibold text-sky-700 dark:text-sky-300' onClick={() => { setSelected(entries.map(entry => entry.id)); setReportOpen(false); }}>Select all matching</button><button className='text-xs font-semibold text-sky-700 dark:text-sky-300' onClick={() => { setSelected([]); setReportOpen(false); }}>Select none</button></div>
+        {entries.length === 0 && <p className='text-sm'>{result.ignored ? 'No changes in this view. Enable Show ignored changes to inspect excluded differences.' : 'No changed values under this comparison mode.'}</p>}
+        <div className='max-h-[36rem] space-y-3 overflow-auto'>{entries.slice(0,visibleCount).map(entry => <article key={entry.id} className='rounded-lg border border-slate-200 p-3 dark:border-slate-700'><label className='flex items-start gap-2 text-sm font-semibold'><input type='checkbox' className='mt-1' checked={selected.includes(entry.id)} onChange={event => { setSelected(previous => event.target.checked ? [...previous,entry.id] : previous.filter(id => id !== entry.id)); setReportOpen(false); }}/><span className='min-w-0 break-all'>{visibleDiffText(entry.path)} <span className='font-normal text-slate-500 dark:text-slate-400'>· {entry.kind}{entry.ignored ? ' · ignored' : ''}{entry.expected === false ? ' · unexpected' : entry.expected === true ? ' · expected' : ''}</span></span></label><div className='mt-2 grid gap-2 md:grid-cols-2'><pre className='max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-red-50 p-2 text-xs text-red-900 dark:bg-red-950/40 dark:text-red-200'>{visibleDiffText(entry.before) || '(absent)'}</pre><pre className='max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-emerald-50 p-2 text-xs text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200'>{visibleDiffText(entry.after) || '(absent)'}</pre></div>{entry.reasons.length > 0 && <p className='mt-2 text-xs text-slate-500 dark:text-slate-400'>{entry.reasons.join(' · ')}</p>}</article>)}</div>
+        {entries.length > visibleCount && <button className='action action-secondary text-xs' onClick={() => setVisibleCount(count => count + 100)}>Show 100 more ({visibleCount} of {entries.length} shown)</button>}<p className='text-xs text-slate-500 dark:text-slate-400'>Detected private values are masked. Identical values share an alias; changed values get different aliases. Detection is best-effort: review paths, keys, free text and context before exporting.</p>
+        <div className='flex flex-wrap items-center gap-3'>{options.mode === 'text' && <label className='flex items-center gap-2 text-xs'><input type='checkbox' checked={includeContext} onChange={event => { setIncludeContext(event.target.checked); setReportOpen(false); }}/>Include nearby context</label>}{includeContext && options.mode === 'text' && <label className='flex items-center gap-2 text-xs'>Lines<select className='rounded border p-1' aria-label='Report context lines' value={options.context} onChange={event => configure({ context: Number(event.target.value) })}>{[1,2,3,5].map(value => <option key={value}>{value}</option>)}</select></label>}<button className='action text-sm' disabled={!result || !selected.length} onClick={() => setReportOpen(true)}>Preview report ({selected.length})</button></div>
+        {reportOpen && report && <section className='space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700'><h3 className='font-semibold'>Exact outgoing text</h3><textarea aria-label='Redacted report preview' readOnly className='field h-72 font-mono text-xs' value={report.text}/><p className='text-xs text-slate-500 dark:text-slate-400'>HTML contains these selected changes and comparison rules. Original filenames, full sources and alias mappings are excluded. No hosting or public link is created.</p><div className='flex flex-wrap gap-3'><button className='action' onClick={() => downloadLocal(report.html,'reviewed-diff.html','text/html;charset=utf-8')}>Download HTML report</button><button className='action action-secondary' onClick={() => downloadLocal(report.text,'reviewed-diff.txt')}>Download text report</button><button className='action action-secondary' onClick={async () => { try { await navigator.clipboard.writeText(report.text); setMessage('Report copied.'); } catch { setMessage('Could not copy. Select the preview text to copy it manually.'); } }}>Copy report</button></div></section>}
+      </section>}
+      <details className='panel my-4'><summary className='cursor-pointer text-sm font-semibold'>Download source / patch</summary><div className='mt-4 space-y-3'><p className='text-sm'>These downloads contain original, unmasked values and all current edits. Comparison rules are not applied. Source encoding and existing line-ending characters are retained; new typed lines use LF.</p><div className='flex flex-wrap gap-3'>{(['a','b'] as const).map(side => <button key={side} className='action action-secondary text-sm' onClick={() => { try { const text = side === 'a' ? left : right; checkDiffInput(text); const bytes = encodeDiffFile(text,encodings[side]); downloadLocal(new Blob([bytes as BlobPart]),side === 'a' ? 'original.txt' : 'changed.txt','application/octet-stream'); } catch (err) { setMessage((err as Error).message); } }}>Download {side === 'a' ? 'original' : 'changed'}</button>)}<button className='action action-secondary text-sm' disabled={patchBusy} onClick={patch}>{patchBusy ? 'Creating patch…' : 'Download exact .diff'}</button></div></div></details>
+    </main><Footer/>
+  </div>;
 }

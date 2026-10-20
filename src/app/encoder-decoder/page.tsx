@@ -68,7 +68,7 @@ export default function EncoderDecoderPage() {
       title='Encoder / Decoder'
       description='Encode and decode Base64, URLs and HTML entities locally.'
     >
-      <section className='mx-auto max-w-5xl rounded-xl bg-white p-6 shadow'>
+      <section className='mx-auto w-full min-w-0 rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <select
           value={mode}
           onChange={(event) => setMode(event.target.value as Mode)}
@@ -97,7 +97,7 @@ export default function EncoderDecoderPage() {
           <textarea
             readOnly
             value={result}
-            className='h-72 rounded border bg-slate-50 p-3 font-mono'
+            className='h-72 rounded border bg-slate-50 dark:bg-slate-950 p-3 font-mono'
           />
         </div>
 

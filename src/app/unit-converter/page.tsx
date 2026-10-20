@@ -102,7 +102,7 @@ export default function UnitConverterPage() {
       title='Unit Converter'
       description='Convert common units locally, with separate decimal SI and binary IEC storage units.'
     >
-      <section className='mx-auto max-w-xl rounded-xl bg-white p-6 shadow'>
+      <section className='mx-auto max-w-xl rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <label className='font-semibold'>
           Category
           <select
@@ -137,7 +137,7 @@ export default function UnitConverterPage() {
               setTo(from);
               setInput(output);
             }}
-            className='rounded bg-slate-100 p-2'
+            className='rounded bg-slate-100 dark:bg-slate-800 p-2'
             aria-label='Swap units'
           >
             ⇄
@@ -170,7 +170,7 @@ export default function UnitConverterPage() {
           <input
             readOnly
             value={output}
-            className='mt-1 w-full rounded border bg-slate-50 p-3 font-mono'
+            className='mt-1 w-full rounded border bg-slate-50 dark:bg-slate-950 p-3 font-mono'
           />
         </label>
       </section>
