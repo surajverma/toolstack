@@ -48,14 +48,14 @@ export default function RegexTesterPage() {
   const explanation = useMemo(() => explain(pattern), [pattern]);
 
   return <LocalToolLayout title='Regex Tester & Explainer' description='Test JavaScript regular expressions locally. Execution runs in a disposable Web Worker and is stopped if a pattern takes too long.'>
-    <div className='mx-auto max-w-4xl space-y-6'>
-      <section className='rounded-xl bg-white p-6 shadow'>
+    <div className='mx-auto w-full min-w-0 space-y-6'>
+      <section className='rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <label htmlFor='regex-pattern' className='font-semibold'>Pattern</label>
-        <div className='mt-2 flex'><span className='rounded-l border bg-slate-100 p-2'>/</span><input id='regex-pattern' value={pattern} onChange={e => setPattern(e.target.value)} className='min-w-0 flex-1 border-y p-2 font-mono'/><span className='border-y bg-slate-100 p-2'>/</span><input aria-label='Regex flags' value={flags} onChange={e => setFlags(e.target.value)} className='w-20 rounded-r border p-2 font-mono'/></div>
+        <div className='mt-2 flex'><span className='rounded-l border bg-slate-100 dark:bg-slate-800 p-2'>/</span><input id='regex-pattern' value={pattern} onChange={e => setPattern(e.target.value)} className='min-w-0 flex-1 border-y p-2 font-mono'/><span className='border-y bg-slate-100 dark:bg-slate-800 p-2'>/</span><input aria-label='Regex flags' value={flags} onChange={e => setFlags(e.target.value)} className='w-20 rounded-r border p-2 font-mono'/></div>
         <label htmlFor='regex-text' className='mt-5 block font-semibold'>Test text</label><textarea id='regex-text' value={text} onChange={e => setText(e.target.value)} className='mt-2 h-40 w-full rounded border p-3 font-mono'/>
-        <div aria-live='polite' className='mt-4'>{running ? <p className='text-sm text-slate-500'>Testing safely...</p> : error ? <p className='text-red-600'>{error}</p> : <><p className='text-sm text-slate-600'>{matches.length} match{matches.length === 1 ? '' : 'es'} in {time.toFixed(3)} ms</p>{matches.slice(0, 100).map((m, i) => <pre key={`${m.index}-${i}`} className='mt-2 overflow-auto rounded bg-emerald-50 p-3 text-sm'>{JSON.stringify(m, null, 2)}</pre>)}{matches.length > 100 && <p className='mt-2 text-sm text-slate-500'>Showing the first 100 matches.</p>}</>}</div>
+        <div aria-live='polite' className='mt-4'>{running ? <p className='text-sm text-slate-500 dark:text-slate-400'>Testing safely...</p> : error ? <p className='text-red-600 dark:text-red-400'>{error}</p> : <><p className='text-sm text-slate-600 dark:text-slate-300'>{matches.length} match{matches.length === 1 ? '' : 'es'} in {time.toFixed(3)} ms</p>{matches.slice(0, 100).map((m, i) => <pre key={`${m.index}-${i}`} className='mt-2 overflow-auto rounded bg-emerald-50 dark:bg-emerald-950 p-3 text-sm'>{JSON.stringify(m, null, 2)}</pre>)}{matches.length > 100 && <p className='mt-2 text-sm text-slate-500 dark:text-slate-400'>Showing the first 100 matches.</p>}</>}</div>
       </section>
-      <section className='rounded-xl bg-white p-6 shadow'><h2 className='font-semibold'>Basic explanation</h2><div className='mt-3 space-y-1 font-mono text-sm'>{explanation.map((x, i) => <div key={i}>{x}</div>)}</div><p className='mt-4 text-xs text-slate-500'>The explainer is intentionally lightweight; the tester itself uses the JavaScript RegExp engine built into the browser.</p></section>
+      <section className='rounded-xl bg-white dark:bg-slate-900 p-6 shadow'><h2 className='font-semibold'>Basic explanation</h2><div className='mt-3 space-y-1 font-mono text-sm'>{explanation.map((x, i) => <div key={i}>{x}</div>)}</div><p className='mt-4 text-xs text-slate-500 dark:text-slate-400'>The explainer is intentionally lightweight; the tester itself uses the JavaScript RegExp engine built into the browser.</p></section>
     </div>
   </LocalToolLayout>;
 }

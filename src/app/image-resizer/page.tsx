@@ -33,15 +33,15 @@ const SettingInput = ({
   unit?: string;
 }) => (
   <div>
-    <label className='block text-sm font-medium text-slate-600 mb-1'>{label}</label>
+    <label className='block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1'>{label}</label>
     <div className='flex'>
       <input
         type={type}
         value={value}
         onChange={onChange}
-        className='block w-full p-2 border border-slate-300 rounded-l-md focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out'
+        className='block w-full p-2 border border-slate-300 dark:border-slate-700 rounded-l-md focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out'
       />
-      <span className='inline-flex items-center px-3 rounded-r-md border border-l-0 border-slate-300 bg-slate-50 text-slate-500 sm:text-sm'>
+      <span className='inline-flex items-center px-3 rounded-r-md border border-l-0 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 sm:text-sm'>
         {unit}
       </span>
     </div>
@@ -50,14 +50,14 @@ const SettingInput = ({
 
 // Component to display each uploaded image
 const ImagePreviewCard = ({ image, onRemove }: { image: ImageFileState; onRemove: (id: string) => void }) => (
-  <div className='relative bg-white border rounded-lg shadow-sm overflow-hidden'>
+  <div className='relative bg-white dark:bg-slate-900 border rounded-lg shadow-sm overflow-hidden'>
     <button
       onClick={() => onRemove(image.id)}
       className='absolute top-1.5 right-1.5 z-10 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center text-lg font-bold hover:bg-black/75 transition-colors leading-none'
       title='Remove from list'>
       &times;
     </button>
-    <div className='w-full h-32 bg-slate-100 flex items-center justify-center'>
+    <div className='w-full h-32 bg-slate-100 dark:bg-slate-800 flex items-center justify-center'>
       {/* FIX: Replaced <img> with next/image <Image> */}
       <Image
         src={image.previewUrl}
@@ -68,10 +68,10 @@ const ImagePreviewCard = ({ image, onRemove }: { image: ImageFileState; onRemove
       />
     </div>
     <div className='p-3 text-center'>
-      <p className='text-xs font-semibold text-slate-700 truncate' title={image.file.name}>
+      <p className='text-xs font-semibold text-slate-700 dark:text-slate-200 truncate' title={image.file.name}>
         {image.file.name}
       </p>
-      <p className='text-xs text-slate-500'>
+      <p className='text-xs text-slate-500 dark:text-slate-400'>
         {image.originalWidth} x {image.originalHeight}px
       </p>
     </div>
@@ -230,18 +230,18 @@ export default function ImageResizerPage() {
   };
 
   return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
+    <div className='flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950'>
       <Navbar />
       <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
+      <main id='main-content' className='flex-grow page-shell px-4 py-8'>
         <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>Batch Image Resizer</h1>
-          <p className='text-lg text-slate-600 mt-1'>
+          <h1 className='text-4xl font-bold text-slate-800 dark:text-slate-100'>Batch Image Resizer</h1>
+          <p className='text-lg text-slate-600 dark:text-slate-300 mt-1'>
             Resize multiple images to a specified width and download as a zip file.
           </p>
         </header>
 
-        <section className='bg-white p-6 md:p-8 rounded-lg shadow-xl max-w-6xl mx-auto'>
+        <section className='bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-xl w-full min-w-0 mx-auto'>
           {images.length === 0 ? (
             <div
               onDragOver={handleDragOver}
@@ -251,8 +251,8 @@ export default function ImageResizerPage() {
               className={`border-4 border-dashed rounded-xl p-8 text-center transition-colors duration-200 ease-in-out
                         ${
                           isDragging
-                            ? 'border-sky-500 bg-sky-50'
-                            : 'border-slate-300 hover:border-sky-400 hover:bg-slate-50'
+                            ? 'border-sky-500 bg-sky-50 dark:bg-sky-950'
+                            : 'border-slate-300 dark:border-slate-700 hover:border-sky-400 hover:bg-slate-50 dark:hover:bg-slate-950'
                         }
                         cursor-pointer`}>
               <input
@@ -264,7 +264,7 @@ export default function ImageResizerPage() {
                 className='hidden'
                 multiple
               />
-              <div className='flex flex-col items-center justify-center text-slate-500 pointer-events-none'>
+              <div className='flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 pointer-events-none'>
                 <svg
                   className='w-16 h-16 mb-4 text-slate-400'
                   fill='none'
@@ -286,7 +286,7 @@ export default function ImageResizerPage() {
             <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
               {/* Controls */}
               <div className='md:col-span-1 space-y-4'>
-                <h2 className='text-xl font-semibold text-slate-700'>Settings</h2>
+                <h2 className='text-xl font-semibold text-slate-700 dark:text-slate-200'>Settings</h2>
                 <SettingInput label='Target Width' value={targetWidth} onChange={handleWidthChange} />
                 <SettingInput label='Target Height' value={targetHeight} onChange={handleHeightChange} />
                 <div className='flex items-center'>
@@ -296,9 +296,9 @@ export default function ImageResizerPage() {
                     type='checkbox'
                     checked={maintainAspectRatio}
                     onChange={(e) => setMaintainAspectRatio(e.target.checked)}
-                    className='h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500'
+                    className='h-4 w-4 rounded border-gray-300 dark:border-slate-700 text-sky-600 dark:text-sky-400 focus:ring-sky-500'
                   />
-                  <label htmlFor='aspect-ratio' className='ml-2 block text-sm text-gray-900'>
+                  <label htmlFor='aspect-ratio' className='ml-2 block text-sm text-gray-900 dark:text-slate-100'>
                     Maintain aspect ratio
                   </label>
                 </div>
@@ -306,13 +306,13 @@ export default function ImageResizerPage() {
                   <button
                     onClick={handleDownloadAll}
                     disabled={isResizing || images.length === 0}
-                    className='w-full px-6 py-3 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 transition-colors disabled:bg-sky-300'>
+                    className='w-full px-6 py-3 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 transition-colors disabled:bg-sky-300 dark:disabled:bg-sky-900'>
                     {isResizing ? 'Resizing...' : `Resize & Download ${images.length} Images`}
                   </button>
                   <button
                     onClick={() => setImages([])}
                     disabled={isResizing}
-                    className='w-full text-sm text-slate-600 hover:text-slate-800 mt-3'>
+                    className='w-full text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 mt-3'>
                     Clear All
                   </button>
                 </div>
@@ -331,7 +331,7 @@ export default function ImageResizerPage() {
         </section>
 
         <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
+          <Link href='/' className='text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:underline'>
             &larr; Back to All Tools
           </Link>
         </div>

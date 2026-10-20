@@ -14,9 +14,9 @@ interface StatCardProps {
 }
 
 const StatCard = ({ label, value }: StatCardProps) => (
-  <div className='bg-slate-100 p-4 rounded-lg text-center shadow-sm'>
-    <p className='text-sm font-medium text-slate-500'>{label}</p>
-    <p className='text-3xl font-bold text-slate-800'>{value}</p>
+  <div className='bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-center shadow-sm'>
+    <p className='text-sm font-medium text-slate-500 dark:text-slate-400'>{label}</p>
+    <p className='text-3xl font-bold text-slate-800 dark:text-slate-100'>{value}</p>
   </div>
 );
 
@@ -51,24 +51,24 @@ export default function TextAnalyzerPage() {
   }, [text]);
 
   return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
+    <div className='flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950'>
       <Navbar />
       <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
+      <main id='main-content' className='flex-grow page-shell px-4 py-8'>
         <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>Text Statistics Analyzer</h1>
-          <p className='text-lg text-slate-600 mt-1'>
+          <h1 className='text-4xl font-bold text-slate-800 dark:text-slate-100'>Text Statistics Analyzer</h1>
+          <p className='text-lg text-slate-600 dark:text-slate-300 mt-1'>
             Get instant stats on your text, like word count, characters, and more.
           </p>
         </header>
 
-        <section className='max-w-4xl mx-auto'>
+        <section className='w-full min-w-0 mx-auto'>
           {/* Input Text Area */}
-          <div className='bg-white p-6 rounded-lg shadow-xl mb-8'>
+          <div className='bg-white dark:bg-slate-900 p-6 rounded-lg shadow-xl mb-8'>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className='w-full p-3 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out'
+              className='w-full p-3 border border-slate-300 dark:border-slate-700 rounded-lg font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition duration-150 ease-in-out'
               rows={12}
               placeholder='Start typing or paste your text here...'
             />
@@ -84,7 +84,7 @@ export default function TextAnalyzerPage() {
         </section>
 
         <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
+          <Link href='/' className='text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:underline'>
             &larr; Back to All Tools
           </Link>
         </div>

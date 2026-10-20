@@ -27,11 +27,11 @@ export default function JwtInspectorPage() {
   };
 
   return <LocalToolLayout title='JWT Inspector' description='Decode JWT header and payload data locally. Decoding does not verify the token signature.'>
-    <section className='mx-auto max-w-5xl rounded-xl bg-white p-6 shadow'>
+    <section className='mx-auto w-full min-w-0 rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
       <textarea value={token} onChange={e => handleTokenChange(e.target.value)} placeholder='Paste a JWT here' className='h-32 w-full rounded border p-3 font-mono text-sm'/>
-      {token && data.error && <p className='mt-3 text-red-600'>{data.error}</p>}
-      {data.payload && <div className='mt-5 grid gap-4 md:grid-cols-2'><div><h2 className='font-semibold'>Header</h2><pre className='mt-2 overflow-auto rounded bg-slate-50 p-4 text-sm'>{JSON.stringify(data.header, null, 2)}</pre></div><div><h2 className='font-semibold'>Payload {expired === true && <span className='ml-2 text-red-600'>(expired)</span>}{expired === false && <span className='ml-2 text-green-700'>(not expired)</span>}</h2><pre className='mt-2 overflow-auto rounded bg-slate-50 p-4 text-sm'>{JSON.stringify(data.payload, null, 2)}</pre></div></div>}
-      <p className='mt-5 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900'>This tool only decodes token contents. It does not verify the cryptographic signature or trustworthiness of the claims.</p>
+      {token && data.error && <p className='mt-3 text-red-600 dark:text-red-400'>{data.error}</p>}
+      {data.payload && <div className='mt-5 grid gap-4 md:grid-cols-2'><div><h2 className='font-semibold'>Header</h2><pre className='mt-2 overflow-auto rounded bg-slate-50 dark:bg-slate-950 p-4 text-sm'>{JSON.stringify(data.header, null, 2)}</pre></div><div><h2 className='font-semibold'>Payload {expired === true && <span className='ml-2 text-red-600 dark:text-red-400'>(expired)</span>}{expired === false && <span className='ml-2 text-green-700 dark:text-green-300'>(not expired)</span>}</h2><pre className='mt-2 overflow-auto rounded bg-slate-50 dark:bg-slate-950 p-4 text-sm'>{JSON.stringify(data.payload, null, 2)}</pre></div></div>}
+      <p className='mt-5 rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 p-3 text-sm text-amber-900 dark:text-amber-200'>This tool only decodes token contents. It does not verify the cryptographic signature or trustworthiness of the claims.</p>
     </section>
   </LocalToolLayout>;
 }

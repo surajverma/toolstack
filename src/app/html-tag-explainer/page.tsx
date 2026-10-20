@@ -331,16 +331,16 @@ export default function HtmlTagExplainerPage() {
   }, [searchTerm]);
 
   return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
+    <div className='flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950'>
       <Navbar />
       <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
+      <main id='main-content' className='flex-grow page-shell px-4 py-8'>
         <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>HTML Tag Explainer</h1>
-          <p className='text-lg text-slate-600 mt-1'>A quick reference guide for standard HTML tags.</p>
+          <h1 className='text-4xl font-bold text-slate-800 dark:text-slate-100'>HTML Tag Explainer</h1>
+          <p className='text-lg text-slate-600 dark:text-slate-300 mt-1'>A quick reference guide for standard HTML tags.</p>
         </header>
 
-        <section className='max-w-4xl mx-auto'>
+        <section className='w-full min-w-0 mx-auto'>
           {/* Search Input */}
           <div className='mb-6 sticky top-4 z-10'>
             <input
@@ -348,7 +348,7 @@ export default function HtmlTagExplainerPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder='Search by tag or description (e.g., <img>, form)'
-              className='w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500'
+              className='w-full p-3 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500'
             />
           </div>
 
@@ -356,29 +356,29 @@ export default function HtmlTagExplainerPage() {
           <div className='space-y-8'>
             {Object.entries(categorizedTags).map(([category, tags]) => (
               <div key={category}>
-                <h2 className='text-2xl font-semibold text-slate-700 border-b-2 border-slate-200 pb-2 mb-4'>
+                <h2 className='text-2xl font-semibold text-slate-700 dark:text-slate-200 border-b-2 border-slate-200 dark:border-slate-800 pb-2 mb-4'>
                   {category}
                 </h2>
                 <div className='space-y-4'>
                   {tags.map(({ tag, description }) => (
-                    <div key={tag} className='p-4 bg-white rounded-lg shadow-sm border'>
-                      <code className='font-bold text-lg text-sky-700 bg-sky-50 px-2 py-1 rounded'>{tag}</code>
-                      <p className='text-slate-600 mt-2'>{description}</p>
+                    <div key={tag} className='p-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm border'>
+                      <code className='font-bold text-lg text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950 px-2 py-1 rounded'>{tag}</code>
+                      <p className='text-slate-600 dark:text-slate-300 mt-2'>{description}</p>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
             {Object.keys(categorizedTags).length === 0 && (
-              <div className='text-center p-8 bg-white rounded-lg shadow-sm border'>
-                <p className='text-slate-500'>No tags found matching your search.</p>
+              <div className='text-center p-8 bg-white dark:bg-slate-900 rounded-lg shadow-sm border'>
+                <p className='text-slate-500 dark:text-slate-400'>No tags found matching your search.</p>
               </div>
             )}
           </div>
         </section>
 
         <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
+          <Link href='/' className='text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:underline'>
             &larr; Back to All Tools
           </Link>
         </div>

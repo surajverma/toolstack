@@ -488,41 +488,41 @@ export default function PdfToolkitPage() {
       : 'Renders each page at about 96 DPI with stronger JPEG compression. Best for small email/upload files when reduced sharpness and flattened pages are acceptable.';
 
   return <LocalToolLayout title='PDF Toolkit' description='Compress, merge, split, reorder, extract, delete and rotate PDF pages, edit metadata, or turn images into a PDF without uploading documents.'>
-    <div className='mx-auto max-w-6xl space-y-6'>
-      <section className='rounded-xl bg-white p-6 shadow'>
+    <div className='mx-auto w-full min-w-0 space-y-6'>
+      <section className='rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div>
             <h2 className='text-xl font-semibold'>PDF files</h2>
-            <p className='mt-1 text-sm text-slate-500'>Add several PDFs at once, or add them one at a time. New selections are appended to the current list.</p>
+            <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>Add several PDFs at once, or add them one at a time. New selections are appended to the current list.</p>
           </div>
-          {files.length > 0 && <button disabled={busy} onClick={clearFiles} className='rounded border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40'>Clear all</button>}
+          {files.length > 0 && <button disabled={busy} onClick={clearFiles} className='rounded border border-red-200 dark:border-red-800 px-3 py-2 text-sm font-semibold text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40'>Clear all</button>}
         </div>
-        <label htmlFor='pdf-files' className='mt-4 inline-block text-sm font-semibold text-slate-700'>Add one or more PDF files</label>
+        <label htmlFor='pdf-files' className='mt-4 inline-block text-sm font-semibold text-slate-700 dark:text-slate-200'>Add one or more PDF files</label>
         <input id='pdf-files' type='file' multiple accept='application/pdf,.pdf' disabled={busy} onChange={event => { void addPdfs(event.target.files); event.currentTarget.value = ''; }} className='mt-2 w-full rounded border p-3 disabled:opacity-50'/>
 
         {files.length > 0 && <>
-          <p className='mt-3 text-sm text-slate-500'>{files.length} file{files.length === 1 ? '' : 's'} loaded, {readableFiles.length} readable.</p>
+          <p className='mt-3 text-sm text-slate-500 dark:text-slate-400'>{files.length} file{files.length === 1 ? '' : 's'} loaded, {readableFiles.length} readable.</p>
           <div className='mt-4 space-y-2'>{files.map((item, index) => <div key={fileKey(item.file)} className='flex flex-wrap items-center gap-2 rounded border p-3'>
             <div className='min-w-0 flex-1'>
               <p className='truncate font-medium'>{item.file.name}</p>
-              <p className={`text-sm ${item.error ? 'text-red-600' : 'text-slate-500'}`}>{item.error ? 'Could not read this PDF' : `${item.pages} page${item.pages === 1 ? '' : 's'} · ${formatBytes(item.file.size)}`}</p>
+              <p className={`text-sm ${item.error ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>{item.error ? 'Could not read this PDF' : `${item.pages} page${item.pages === 1 ? '' : 's'} · ${formatBytes(item.file.size)}`}</p>
             </div>
             <button disabled={busy || index === 0} onClick={() => moveFile(index, -1)} className='rounded border px-3 py-1 disabled:opacity-30' aria-label={`Move ${item.file.name} up`}>↑</button>
             <button disabled={busy || index === files.length - 1} onClick={() => moveFile(index, 1)} className='rounded border px-3 py-1 disabled:opacity-30' aria-label={`Move ${item.file.name} down`}>↓</button>
-            <button disabled={busy} onClick={() => void removeFile(fileKey(item.file))} className='rounded border border-red-200 px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-30' aria-label={`Remove ${item.file.name}`}>Remove</button>
+            <button disabled={busy} onClick={() => void removeFile(fileKey(item.file))} className='rounded border border-red-200 dark:border-red-800 px-3 py-1 text-sm font-semibold text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-30' aria-label={`Remove ${item.file.name}`}>Remove</button>
           </div>)}</div>
         </>}
 
         <button disabled={busy || readableFiles.length < 2} onClick={() => void merge()} className='mt-4 rounded bg-sky-600 px-4 py-2 text-white disabled:opacity-40'>Merge PDFs in this order</button>
       </section>
 
-      {readableFiles.length > 0 && <section className='rounded-xl border border-sky-100 bg-sky-50 p-5'>
-        <h2 className='font-semibold text-slate-900'>PDF to edit or compress</h2>
-        <p className='mt-1 text-sm text-slate-600'>Merge uses the full ordered list above. The tools below work on {readableFiles.length === 1 ? 'this PDF' : 'the selected PDF'} only.</p>
+      {readableFiles.length > 0 && <section className='rounded-xl border border-sky-100 dark:border-sky-900 bg-sky-50 dark:bg-sky-950 p-5'>
+        <h2 className='font-semibold text-slate-900 dark:text-slate-100'>PDF to edit or compress</h2>
+        <p className='mt-1 text-sm text-slate-600 dark:text-slate-300'>Merge uses the full ordered list above. The tools below work on {readableFiles.length === 1 ? 'this PDF' : 'the selected PDF'} only.</p>
 
-        {readableFiles.length === 1 && workingPdf ? <div className='mt-3 min-w-0 rounded-lg border border-sky-200 bg-white p-3'>
-          <p className='truncate font-medium text-slate-900' title={workingPdf.file.name}>{workingPdf.file.name}</p>
-          <p className='mt-1 text-sm text-slate-500'>{workingPdf.pages} page{workingPdf.pages === 1 ? '' : 's'} · {formatBytes(workingPdf.file.size)}</p>
+        {readableFiles.length === 1 && workingPdf ? <div className='mt-3 min-w-0 rounded-lg border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 p-3'>
+          <p className='truncate font-medium text-slate-900 dark:text-slate-100' title={workingPdf.file.name}>{workingPdf.file.name}</p>
+          <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>{workingPdf.pages} page{workingPdf.pages === 1 ? '' : 's'} · {formatBytes(workingPdf.file.size)}</p>
         </div> : <div className='mt-3 max-h-64 space-y-2 overflow-y-auto pr-1' role='listbox' aria-label='PDF to edit or compress'>
           {readableFiles.map(item => {
             const key = fileKey(item.file);
@@ -534,41 +534,41 @@ export default function PdfToolkitPage() {
               aria-selected={selected}
               disabled={busy}
               onClick={() => void selectWorkingPdf(key)}
-              className={`block w-full min-w-0 rounded-lg border p-3 text-left transition disabled:opacity-50 ${selected ? 'border-sky-400 bg-white ring-2 ring-sky-100' : 'border-sky-200 bg-white/70 hover:bg-white'}`}
+              className={`block w-full min-w-0 rounded-lg border p-3 text-left transition disabled:opacity-50 ${selected ? 'border-sky-400 bg-white dark:bg-slate-900 ring-2 ring-sky-100' : 'border-sky-200 dark:border-sky-800 bg-white/70 hover:bg-white dark:hover:bg-slate-900'}`}
             >
-              <span className='block truncate font-medium text-slate-900' title={item.file.name}>{item.file.name}</span>
-              <span className='mt-1 block text-sm text-slate-500'>{item.pages} page{item.pages === 1 ? '' : 's'} · {formatBytes(item.file.size)}</span>
+              <span className='block truncate font-medium text-slate-900 dark:text-slate-100' title={item.file.name}>{item.file.name}</span>
+              <span className='mt-1 block text-sm text-slate-500 dark:text-slate-400'>{item.pages} page{item.pages === 1 ? '' : 's'} · {formatBytes(item.file.size)}</span>
             </button>;
           })}
         </div>}
       </section>}
 
-      {workingPdf && <section className='rounded-xl bg-white p-6 shadow'>
+      {workingPdf && <section className='rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <h2 className='text-xl font-semibold'>Compress PDF</h2>
-        <p className='mt-1 text-sm text-slate-500'>All compression stays in your browser. Lossless preserves document structure; Balanced and Strong deliberately flatten pages for much larger reductions on scanned or image-heavy PDFs.</p>
+        <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>All compression stays in your browser. Lossless preserves document structure; Balanced and Strong deliberately flatten pages for much larger reductions on scanned or image-heavy PDFs.</p>
         <div className='mt-4 grid gap-3 md:grid-cols-[16rem_1fr]'>
           <select value={compressionMode} onChange={event => { setCompressionMode(event.target.value as CompressionMode); setCompressionResult(null); }} className='rounded border p-3'>
             <option value='lossless'>Lossless / structural</option>
             <option value='balanced'>Balanced · 150 DPI (flatten pages)</option>
             <option value='strong'>Strong · 96 DPI (flatten pages)</option>
           </select>
-          <p className='rounded bg-slate-50 p-3 text-sm text-slate-600'>{compressionHelp}</p>
+          <p className='rounded bg-slate-50 dark:bg-slate-950 p-3 text-sm text-slate-600 dark:text-slate-300'>{compressionHelp}</p>
         </div>
         <button disabled={busy} onClick={() => void compressPdf(workingPdf)} className='mt-4 rounded bg-emerald-600 px-4 py-2 font-semibold text-white disabled:opacity-40'>{busy ? 'Working…' : `Compress ${workingPdf.file.name}`}</button>
-        {compressionStatus && <p className='mt-3 text-sm text-slate-600' aria-live='polite'>{compressionStatus}</p>}
-        {compressionResult && <div className='mt-4 rounded border border-slate-200 bg-slate-50 p-4 text-sm'>
+        {compressionStatus && <p className='mt-3 text-sm text-slate-600 dark:text-slate-300' aria-live='polite'>{compressionStatus}</p>}
+        {compressionResult && <div className='mt-4 rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 text-sm'>
           <div className='grid gap-2 sm:grid-cols-3'>
-            <div><span className='block text-slate-500'>Original</span><strong>{formatBytes(compressionResult.original)}</strong></div>
-            <div><span className='block text-slate-500'>Compressed result</span><strong>{formatBytes(compressionResult.compressed)}</strong></div>
-            <div><span className='block text-slate-500'>Reduction</span><strong>{compressionResult.compressed < compressionResult.original ? `${((1 - compressionResult.compressed / compressionResult.original) * 100).toFixed(1)}%` : 'No reduction'}</strong></div>
+            <div><span className='block text-slate-500 dark:text-slate-400'>Original</span><strong>{formatBytes(compressionResult.original)}</strong></div>
+            <div><span className='block text-slate-500 dark:text-slate-400'>Compressed result</span><strong>{formatBytes(compressionResult.compressed)}</strong></div>
+            <div><span className='block text-slate-500 dark:text-slate-400'>Reduction</span><strong>{compressionResult.compressed < compressionResult.original ? `${((1 - compressionResult.compressed / compressionResult.original) * 100).toFixed(1)}%` : 'No reduction'}</strong></div>
           </div>
-          <p className='mt-2 text-slate-600'>{compressionResult.downloaded ? 'The smaller copy was downloaded automatically.' : 'The result was not smaller, so ToolStack kept your original instead of downloading a larger file.'}</p>
+          <p className='mt-2 text-slate-600 dark:text-slate-300'>{compressionResult.downloaded ? 'The smaller copy was downloaded automatically.' : 'The result was not smaller, so ToolStack kept your original instead of downloading a larger file.'}</p>
         </div>}
       </section>}
 
-      {workingPdf && <section className='rounded-xl bg-white p-6 shadow'>
+      {workingPdf && <section className='rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <h2 className='text-xl font-semibold'>Edit pages in a PDF</h2>
-        <p className='mt-1 text-sm text-slate-500'>Extract, reorder, delete or rotate pages in <strong>{workingPdf.file.name}</strong>. Enter pages such as 1-3,5,8-6. Descending ranges reverse page order.</p>
+        <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>Extract, reorder, delete or rotate pages in <strong>{workingPdf.file.name}</strong>. Enter pages such as 1-3,5,8-6. Descending ranges reverse page order.</p>
         <div className='mt-4 grid gap-3 md:grid-cols-[1fr_12rem_10rem]'>
           <input value={selection} onChange={event => setSelection(event.target.value)} className='rounded border p-2 font-mono' aria-label='Page selection'/>
           <select value={operation} onChange={event => setOperation(event.target.value as typeof operation)} className='rounded border p-2'>
@@ -578,15 +578,15 @@ export default function PdfToolkitPage() {
           </select>
           {operation === 'rotate' ? <select value={rotation} onChange={event => setRotation(Number(event.target.value))} className='rounded border p-2'><option value={90}>+90°</option><option value={180}>+180°</option><option value={270}>+270°</option></select> : <div/>}
         </div>
-        <p className='mt-3 rounded bg-slate-50 p-3 text-sm text-slate-600'>{operationHelp}</p>
+        <p className='mt-3 rounded bg-slate-50 dark:bg-slate-950 p-3 text-sm text-slate-600 dark:text-slate-300'>{operationHelp}</p>
         <div className='mt-4 flex flex-wrap gap-3'>
           <button disabled={busy} onClick={() => void applyPages(workingPdf)} className='rounded bg-sky-600 px-4 py-2 text-white disabled:opacity-40'>Apply & download copy</button>
           <button disabled={busy} onClick={() => void split(workingPdf)} className='rounded bg-slate-800 px-4 py-2 text-white disabled:opacity-40'>Split every page to ZIP</button>
         </div>
-        <p className='mt-3 text-xs text-slate-500'>“Split every page to ZIP” creates one single-page PDF per page and packages all of them into a ZIP file. It does not use the page-selection field.</p>
+        <p className='mt-3 text-xs text-slate-500 dark:text-slate-400'>“Split every page to ZIP” creates one single-page PDF per page and packages all of them into a ZIP file. It does not use the page-selection field.</p>
       </section>}
 
-      {workingPdf && <section className='rounded-xl bg-white p-6 shadow'>
+      {workingPdf && <section className='rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <h2 className='text-xl font-semibold'>Document metadata · {workingPdf.file.name}</h2>
         <div className='mt-4 grid gap-3 sm:grid-cols-2'>
           <label>Title<input value={metadata.title} onChange={event => setMetadata(prev => ({ ...prev, title: event.target.value }))} className='mt-1 w-full rounded border p-2'/></label>
@@ -597,15 +597,15 @@ export default function PdfToolkitPage() {
         <button disabled={busy} onClick={() => void saveMetadata(workingPdf)} className='mt-4 rounded bg-emerald-600 px-4 py-2 text-white disabled:opacity-40'>Save metadata to a copy</button>
       </section>}
 
-      <section className='rounded-xl bg-white p-6 shadow'>
+      <section className='rounded-xl bg-white dark:bg-slate-900 p-6 shadow'>
         <h2 className='text-xl font-semibold'>Images → PDF</h2>
-        <p className='mt-1 text-sm text-slate-500'>JPEG, PNG and browser-decodable images are fitted onto A4 portrait or landscape pages.</p>
+        <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>JPEG, PNG and browser-decodable images are fitted onto A4 portrait or landscape pages.</p>
         <input type='file' multiple accept='image/*' onChange={event => setImages(Array.from(event.target.files ?? []))} className='mt-4 w-full rounded border p-3'/>
         <button disabled={busy || !images.length} onClick={() => void imagesToPdf()} className='mt-4 rounded bg-sky-600 px-4 py-2 text-white disabled:opacity-40'>Create PDF from {images.length || 0} image{images.length === 1 ? '' : 's'}</button>
       </section>
 
-      <div className='rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950'>PDF operations rewrite document structure. Existing digital signatures can become invalid, and unusual/encrypted PDFs may not be supported. Lossless compression mainly optimizes PDF structure and streams, so an already-efficient or image-heavy PDF may shrink only a little. Balanced/Strong modes flatten every page into a JPEG-backed page, so text selection, links, forms, bookmarks, accessibility structure and digital signatures are not preserved.</div>
-      {message && <p className='rounded bg-red-50 p-3 text-red-700' aria-live='polite'>{message}</p>}
+      <div className='rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 p-4 text-sm text-amber-950 dark:text-amber-100'>PDF operations rewrite document structure. Existing digital signatures can become invalid, and unusual/encrypted PDFs may not be supported. Lossless compression mainly optimizes PDF structure and streams, so an already-efficient or image-heavy PDF may shrink only a little. Balanced/Strong modes flatten every page into a JPEG-backed page, so text selection, links, forms, bookmarks, accessibility structure and digital signatures are not preserved.</div>
+      {message && <p className='rounded bg-red-50 dark:bg-red-950 p-3 text-red-700 dark:text-red-300' aria-live='polite'>{message}</p>}
     </div>
   </LocalToolLayout>;
 }

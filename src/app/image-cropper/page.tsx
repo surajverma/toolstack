@@ -142,18 +142,18 @@ export default function ImageCropperPage() {
   }
 
   return (
-    <div className='flex flex-col min-h-screen bg-slate-50'>
+    <div className='flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950'>
       <Navbar />
       <Breadcrumbs />
-      <main className='flex-grow container mx-auto px-4 py-8'>
+      <main id='main-content' className='flex-grow page-shell px-4 py-8'>
         <header className='mb-8 text-center'>
-          <h1 className='text-4xl font-bold text-slate-800'>Image Cropper</h1>
-          <p className='text-lg text-slate-600 mt-1'>Upload an image and select an area to crop.</p>
+          <h1 className='text-4xl font-bold text-slate-800 dark:text-slate-100'>Image Cropper</h1>
+          <p className='text-lg text-slate-600 dark:text-slate-300 mt-1'>Upload an image and select an area to crop.</p>
         </header>
 
-        <section className='bg-white p-6 md:p-8 rounded-lg shadow-xl max-w-4xl mx-auto'>
+        <section className='bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-xl w-full min-w-0 mx-auto'>
           <div className='mb-4'>
-            <label htmlFor='image-upload' className='block text-sm font-medium text-slate-700'>
+            <label htmlFor='image-upload' className='block text-sm font-medium text-slate-700 dark:text-slate-200'>
               Select Image
             </label>
             <input
@@ -161,14 +161,14 @@ export default function ImageCropperPage() {
               type='file'
               accept='image/*'
               onChange={onSelectFile}
-              className='mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100'
+              className='mt-1 block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100'
             />
           </div>
 
           {imgSrc && (
             <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mt-6'>
               {/* Cropper UI */}
-              <div className='md:col-span-2 flex justify-center bg-slate-100 p-2 rounded-lg'>
+              <div className='md:col-span-2 flex justify-center bg-slate-100 dark:bg-slate-800 p-2 rounded-lg'>
                 <ReactCrop
                   crop={crop}
                   onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -188,12 +188,12 @@ export default function ImageCropperPage() {
               </div>
               {/* Controls and Download */}
               <div className='space-y-4'>
-                <h3 className='text-lg font-semibold text-slate-700'>Options</h3>
+                <h3 className='text-lg font-semibold text-slate-700 dark:text-slate-200'>Options</h3>
                 <div>
                   <button
                     onClick={() => setAspect(16 / 9)}
                     className={`w-full p-2 text-sm rounded-md border ${
-                      aspect === 16 / 9 ? 'bg-sky-600 text-white border-sky-600' : 'bg-white'
+                      aspect === 16 / 9 ? 'bg-sky-600 text-white border-sky-600' : 'bg-white dark:bg-slate-900'
                     }`}>
                     16:9
                   </button>
@@ -202,7 +202,7 @@ export default function ImageCropperPage() {
                   <button
                     onClick={() => setAspect(4 / 3)}
                     className={`w-full p-2 text-sm rounded-md border ${
-                      aspect === 4 / 3 ? 'bg-sky-600 text-white border-sky-600' : 'bg-white'
+                      aspect === 4 / 3 ? 'bg-sky-600 text-white border-sky-600' : 'bg-white dark:bg-slate-900'
                     }`}>
                     4:3
                   </button>
@@ -211,7 +211,7 @@ export default function ImageCropperPage() {
                   <button
                     onClick={() => setAspect(1)}
                     className={`w-full p-2 text-sm rounded-md border ${
-                      aspect === 1 ? 'bg-sky-600 text-white border-sky-600' : 'bg-white'
+                      aspect === 1 ? 'bg-sky-600 text-white border-sky-600' : 'bg-white dark:bg-slate-900'
                     }`}>
                     Square
                   </button>
@@ -220,7 +220,7 @@ export default function ImageCropperPage() {
                   <button
                     onClick={() => setAspect(undefined)}
                     className={`w-full p-2 text-sm rounded-md border ${
-                      aspect === undefined ? 'bg-sky-600 text-white border-sky-600' : 'bg-white'
+                      aspect === undefined ? 'bg-sky-600 text-white border-sky-600' : 'bg-white dark:bg-slate-900'
                     }`}>
                     Free
                   </button>
@@ -228,7 +228,7 @@ export default function ImageCropperPage() {
                 {/* START: Added hidden canvas and preview */}
                 {!!completedCrop && (
                   <div className='pt-4 border-t'>
-                    <h3 className='text-lg font-semibold text-slate-700 mb-2'>Preview</h3>
+                    <h3 className='text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2'>Preview</h3>
                     <div className='flex justify-center'>
                       <canvas
                         ref={previewCanvasRef}
@@ -244,7 +244,7 @@ export default function ImageCropperPage() {
                     <button
                       onClick={handleDownloadCrop}
                       disabled={!completedCrop || !completedCrop.width || !completedCrop.height}
-                      className='w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors disabled:bg-green-300'>
+                      className='w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors disabled:bg-green-300 dark:disabled:bg-green-900'>
                       Download Cropped Image
                     </button>
                   </div>
@@ -256,7 +256,7 @@ export default function ImageCropperPage() {
         </section>
 
         <div className='mt-12 text-center'>
-          <Link href='/' className='text-sky-600 hover:text-sky-800 hover:underline'>
+          <Link href='/' className='text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:underline'>
             &larr; Back to All Tools
           </Link>
         </div>
