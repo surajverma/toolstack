@@ -1,5 +1,12 @@
 import Link from 'next/link';
+import { PwaControls } from './PwaProvider';
+
 export default function Footer() {
-  const year = new Date().getFullYear();
-  return <footer className='mt-16 border-t border-slate-200 dark:border-slate-800 bg-slate-950 p-8 text-center text-slate-300'><p className='text-sm'>&copy; {year} <a href='https://www.surajverma.in' target='_blank' rel='noopener noreferrer' className='font-medium text-white hover:underline'>Suraj Verma</a></p><p className='mt-2 text-sm text-slate-400'>Open source under the <Link href='/license' className='text-sky-300 hover:underline'>MIT License</Link> · <a href='https://github.com/SurajVerma/toolstack' target='_blank' rel='noopener noreferrer' className='text-sky-300 hover:underline'>GitHub</a></p></footer>;
+  return <footer className='site-footer'>
+    <div className='page-shell site-footer-inner'>
+      <p>&copy; {new Date().getFullYear()} <a href='https://www.surajverma.in' target='_blank' rel='noopener noreferrer'>Suraj Verma</a></p>
+      <PwaControls />
+      <p>Open source · <Link href='/license'>MIT License</Link> · <a href='https://github.com/surajverma/toolstack' target='_blank' rel='noopener noreferrer'>GitHub</a></p>
+    </div>
+  </footer>;
 }
