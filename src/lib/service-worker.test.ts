@@ -91,6 +91,23 @@ describe('complete offline installation', () => {
     expect(app.client.postMessage.mock.calls.at(-1)?.[0].state).toBe('error');
   });
 
+  it('reports the rejected resource and HTTP status without claiming offline readiness', async () => {
+    const app = setup();
+    app.network.mockImplementation(async input => new Response('resource', { status: String(input).includes('unused-tool.txt') ? 444 : 200 }));
+    await expect(app.dispatch('install')).rejects.toThrow('HTTP 444');
+    const failure = app.client.postMessage.mock.calls.at(-1)?.[0];
+    expect(failure.state).toBe('error');
+    expect(failure.detail).toContain('/pwa/build/unused-tool.txt');
+    expect(await app.store('toolstack-pwa-test').match(readyMarker)).toBeUndefined();
+  });
+
+  it('rejects an HTML error page returned with HTTP 200 for a navigation payload', async () => {
+    const app = setup();
+    app.network.mockImplementation(async input => new Response('resource', { headers: { 'content-type': String(input).includes('.txt') ? 'text/html' : 'text/javascript' } }));
+    await expect(app.dispatch('install')).rejects.toThrow('received HTML');
+    expect(app.skipWaiting).not.toHaveBeenCalled();
+  });
+
   it('does not intercept uploads, external requests or arbitrary same-origin data', async () => {
     const app = setup();
     expect(await app.request('/unused-tool', { method: 'POST' })).toBeUndefined();

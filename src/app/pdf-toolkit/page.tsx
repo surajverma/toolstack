@@ -387,10 +387,12 @@ export default function PdfToolkitPage() {
 
       if (compressionMode === 'lossless') {
         const { createQpdfRunner } = await import('qpdf-run');
+        // Absolute HTTP(S) URLs stay correct when the library resolves against import.meta.url.
+        const assetBase = new URL('/qpdf/', window.location.origin);
         const runner = await createQpdfRunner({
-          workerUrl: '/qpdf/worker.js',
-          qpdfJsUrl: '/qpdf/qpdf.js',
-          wasmUrl: '/qpdf/qpdf.wasm',
+          workerUrl: new URL('worker.js', assetBase).href,
+          qpdfJsUrl: new URL('qpdf.js', assetBase).href,
+          wasmUrl: new URL('qpdf.wasm', assetBase).href,
           timeoutMs: 90000,
         });
 

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PwaControls } from './PwaProvider';
+import { PwaControls } from './PwaControls';
 
 export default function Footer() {
   return <footer className='site-footer'>

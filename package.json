@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "privacy-check": "node scripts/check-privacy.mjs",
+    "check-pwa": "node scripts/check-pwa.mjs",
     "security-check": "npm audit --omit=dev --audit-level=high",
     "verify": "npm run security-check && npm run privacy-check && npm run lint && npm run typecheck && npm run test && npm run build"
   },

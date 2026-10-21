@@ -25,6 +25,9 @@
 # production
 /build
 
+# local deployment archives
+/*.zip
+
 # misc
 .DS_Store
 *.pem

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { offlineSnapshotUrl } from './pwa-assets.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const next = join(root, '.next');
@@ -47,7 +48,7 @@ for (const [route, info] of Object.entries(prerender.routes)) {
     ['rsc', 'flight', '/__toolstack-flight/' + stem],
   ]) {
     const source = join(next, 'server/app', stem + '.' + extension);
-    const url = `/pwa/${version}/${stem}.${extension === 'rsc' ? 'txt' : extension}`;
+    const url = offlineSnapshotUrl(version, route, type);
     const destination = join(publicRoot, url);
     await mkdir(dirname(destination), { recursive: true });
     await copyFile(source, destination);

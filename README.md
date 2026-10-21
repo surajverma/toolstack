@@ -43,11 +43,23 @@ npm run build
 npm start
 ```
 
-Keep it open online until the footer says **Offline ready**. All tools can then run offline, including ones you haven't opened yet. Choose **Install app** to add ToolStack to your device; installation is optional.
+The production app downloads all tools for offline use in the background, including ones you haven't opened yet. **Install app** appears once the download is complete and the browser offers installation, then disappears after installation. Installation is optional; supported browsers also offer it through their own menus.
 
 The offline cache contains application resources, not your files or tool input. Browser storage can be cleared or evicted; reconnect to download the app again. Offline support requires HTTPS or localhost and is disabled during development.
 
 Save your work before choosing **Reload to update**. For deployment and caching details, see the [offline guide](docs/offline.md). Always run `npm run build` so the offline postbuild step is included.
+
+## Run with Docker
+
+With Docker and Docker Compose installed:
+
+```bash
+docker compose up --build -d
+```
+
+Open [localhost:5010](http://localhost:5010). This builds the production app locally, including all offline assets; no published image or database is required. Stop it with `docker compose down`. After pulling updates, run the build command again.
+
+Compose publishes port 5010 on all host interfaces. For self-hosting, change `NEXT_PUBLIC_SITE_URL` under `build.args` in `compose.yml` to your domain, then rebuild. The site URL is a **build-time** setting for sitemap and robots metadata. Use HTTPS through your reverse proxy when accessing the app beyond localhost, and bypass caching for `/sw.js` and `/pwa/sw.js`.
 
 ## Contributing
 
