@@ -1,11 +1,16 @@
 import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
+import Wordmark from './Wordmark';
 
-export default function Navbar() {
-  return <nav aria-label='Main navigation' className='bg-gradient-to-r from-sky-700 to-indigo-800 text-white shadow-sm'>
-    <div className='page-shell flex items-center justify-between gap-4 px-4 py-4'>
-      <Link href='/' className='text-2xl font-extrabold tracking-tight'>ToolStack</Link>
-      <div className='flex items-center gap-4'><Link href='/#tools' className='hidden text-sm font-semibold hover:underline sm:inline'>All tools</Link><ThemeToggle/></div>
+export default function Navbar({ home = false }: { home?: boolean }) {
+  return <nav aria-label='Main navigation' className='site-navbar'>
+    <div className='page-shell site-navbar-inner'>
+      <Link href='/' aria-label='ToolStack home' className='site-logo'><Wordmark /></Link>
+      <div className='site-navbar-links'>
+        {!home && <Link href='/#tools'>All tools</Link>}
+        <a href='https://github.com/surajverma/toolstack' target='_blank' rel='noopener noreferrer'>GitHub</a>
+        <ThemeToggle />
+      </div>
     </div>
   </nav>;
 }

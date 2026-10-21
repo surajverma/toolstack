@@ -1,12 +1,5 @@
-export type ToolCategory =
-  | 'Privacy & Security'
-  | 'PDF & Documents'
-  | 'Images'
-  | 'Text & Data'
-  | 'Developer'
-  | 'Accessibility'
-  | 'Converters'
-  | 'Generators';
+import { TOOL_CATEGORY_ORDER } from '@/config/tool-categories';
+export type ToolCategory = typeof TOOL_CATEGORY_ORDER[number];
 
 export interface Tool {
   id: string;

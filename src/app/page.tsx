@@ -1,44 +1,69 @@
 'use client';
-import { useMemo, useState } from 'react';
+
+import { useMemo, useState, type ReactNode } from 'react';
+import { LayoutGrid, Star } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Wordmark from '@/components/Wordmark';
 import SearchBar from '@/components/SearchBar';
 import ToolList from '@/components/ToolList';
 import PrivacyBadge from '@/components/PrivacyBadge';
-import { TOOLS, TOOL_CATEGORIES } from '@/config/tools';
+import { CategoryIcon } from '@/components/ToolIcon';
+import { usePinnedTools } from '@/lib/pinned-tools';
+import { TOOLS } from '@/config/tools';
+import { TOOL_CATEGORY_ORDER } from '@/config/tool-categories';
 import type { ToolCategory } from '@/types/tool';
+
+type DirectoryView = 'all' | 'pinned' | ToolCategory;
+const preferred = new Map(['text-diff', 'json-toolbox', 'pdf-toolkit', 'support-sanitizer', 'image-compressor', 'data-anonymizer', 'qr-toolkit', 'markdown-editor', 'url-cleaner', 'document-privacy', 'file-hash', 'timestamp-tool'].map((id, index) => [id, index]));
+const directoryTools = [...TOOLS].sort((a, b) => (preferred.get(a.id) ?? preferred.size) - (preferred.get(b.id) ?? preferred.size));
+
+function FilterButton({ label, value, count, icon, selected, onSelect }: {
+  label: string; value: DirectoryView; count: number; icon: ReactNode;
+  selected: DirectoryView; onSelect: (value: DirectoryView) => void;
+}) {
+  return <button type='button' className='category-button' aria-label={`${label}, ${count} tools`} aria-pressed={selected === value} onClick={() => onSelect(value)}>
+    {icon}<span>{label}</span><span className='category-count' aria-hidden='true'>{count}</span>
+  </button>;
+}
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [category, setCategory] = useState<ToolCategory | null>(null);
-  const q = searchTerm.trim().toLowerCase();
-  const filtered = useMemo(() => TOOLS.filter(tool => (!category || tool.category === category) && (!q || [tool.name, tool.description, ...tool.tags].some(value => value.toLowerCase().includes(q)))), [category, q]);
-  const browsing = !q && !category;
-  return <div className='flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950'>
-    <Navbar/>
-    <main id='main-content' className='page-shell flex-grow px-4 py-8 sm:py-10'>
-      <header className='mx-auto max-w-3xl text-center'>
-        <h1 className='text-4xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100 sm:text-5xl'>Tool<span className='text-sky-600 dark:text-sky-300'>Stack</span></h1>
-        <p className='mt-3 text-lg text-slate-600 dark:text-slate-300'>Privacy-first browser tools. Your data stays on your device.</p>
-        <div className='mt-4'><PrivacyBadge/></div>
-        <div className='mt-6'><SearchBar onSearch={setSearchTerm}/></div>
-      </header>
+  const [view, setView] = useState<DirectoryView>('all');
+  const { pinnedIds, togglePin } = usePinnedTools();
+  const query = searchTerm.trim().toLowerCase();
+  const filtered = useMemo(() => directoryTools.filter(tool =>
+    (view === 'all' || (view === 'pinned' ? pinnedIds.has(tool.id) : tool.category === view)) &&
+    (!query || [tool.name, tool.description, ...tool.tags].some(value => value.toLowerCase().includes(query)))
+  ), [view, query, pinnedIds]);
+  const title = query ? 'Search results' : view === 'all' ? 'All tools' : view === 'pinned' ? 'Pinned tools' : view;
 
-      <section id='tools' className='mt-10 scroll-mt-6' aria-label='Tool directory'>
-        <label className='mb-6 block text-sm font-semibold sm:hidden'>Category<select className='field mt-2' value={category ?? ''} onChange={event => setCategory(event.target.value ? event.target.value as ToolCategory : null)}><option value=''>All tools ({TOOLS.length})</option>{TOOL_CATEGORIES.map(item => <option key={item} value={item}>{item} ({TOOLS.filter(tool => tool.category === item).length})</option>)}</select></label>
-        <div className='mb-7 hidden flex-wrap gap-2 sm:flex' aria-label='Filter by category'>
-          <button aria-pressed={category === null} onClick={() => setCategory(null)} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${category === null ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-sky-400'}`}>All <span className='ml-1 opacity-75'>{TOOLS.length}</span></button>
-          {TOOL_CATEGORIES.map(item => <button key={item} aria-pressed={category === item} onClick={() => setCategory(item)} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${category === item ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-sky-400'}`}>{item}<span className='ml-1.5 opacity-75'>{TOOLS.filter(tool => tool.category === item).length}</span></button>)}
+  return <div className='home-page flex min-h-screen flex-col'>
+    <Navbar home />
+    <main id='main-content' className='flex-1'>
+      <header className='home-intro'>
+        <h1><Wordmark /></h1>
+        <p>Privacy-first browser tools. Your data stays on your device.</p>
+        <PrivacyBadge />
+      </header>
+      <section id='tools' className='directory-shell page-shell' aria-label='Tool directory'>
+        <header className='directory-header'>
+          <div className='directory-heading'><h2>{title}</h2><span>{filtered.length} tool{filtered.length === 1 ? '' : 's'}</span></div>
+          <SearchBar value={searchTerm} onSearch={setSearchTerm} />
+        </header>
+        <aside className='directory-sidebar'>
+          <nav className='category-nav' aria-label='Filter tools'>
+            <FilterButton label='All tools' value='all' count={TOOLS.length} icon={<LayoutGrid size={17} strokeWidth={1.7} aria-hidden='true' />} selected={view} onSelect={setView} />
+            <FilterButton label='Pinned' value='pinned' count={pinnedIds.size} icon={<Star size={17} strokeWidth={1.7} aria-hidden='true' />} selected={view} onSelect={setView} />
+            <p className='category-label'>Categories</p>
+            {TOOL_CATEGORY_ORDER.map(category => <FilterButton key={category} label={category} value={category} count={TOOLS.filter(tool => tool.category === category).length} icon={<CategoryIcon category={category} />} selected={view} onSelect={setView} />)}
+          </nav>
+        </aside>
+        <div className='directory-content'>
+          <ToolList key={`${view}:${query}`} tools={filtered} pinnedIds={pinnedIds} onTogglePin={togglePin} emptyMessage={view === 'pinned' && !query ? 'Star a tool to keep it here.' : 'No tools found. Try another search or category.'} />
         </div>
-        {browsing ? <>
-          <div id='all-tools' className='scroll-mt-6 space-y-10'>{TOOL_CATEGORIES.map(item => <section key={item} aria-label={item}><div className='mb-4 flex items-center gap-3'><h2 className='text-xl font-bold text-slate-900 dark:text-slate-100'>{item}</h2><span className='text-sm text-slate-500 dark:text-slate-400'>{TOOLS.filter(tool => tool.category === item).length} tools</span></div><ToolList tools={TOOLS.filter(tool => tool.category === item)}/></section>)}</div>
-        </> : <>
-          <div className='mb-5 flex flex-wrap items-baseline justify-between gap-2'><h2 className='text-2xl font-bold text-slate-900 dark:text-slate-100'>{q ? 'Search results' : category}</h2><p role='status' className='text-sm text-slate-500 dark:text-slate-400'>{filtered.length} tool{filtered.length === 1 ? '' : 's'}</p></div>
-          <ToolList tools={filtered}/>
-          {filtered.length === 0 && <div className='panel text-center'><p>No tools found. Try a shorter search or choose another category.</p></div>}
-        </>}
       </section>
     </main>
-    <Footer/>
+    <Footer />
   </div>;
 }

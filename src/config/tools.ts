@@ -52,6 +52,19 @@ export const TOOLS: Tool[] = [
   tool('calendar-privacy','Calendar Privacy Exporter','Share a finite busy-time snapshot without meeting details or account connections.','Privacy & Security',['privacy','calendar','ics','availability','busy','sharing'],{new:true}),
   tool('synthetic-data','Synthetic Dataset Generator','Generate repeatable fake CSV / JSON datasets with linked tables.','Generators',['synthetic','dataset','csv','json','test','fixtures','generator'],{new:true}),
   tool('qr-toolkit','QR Toolkit','Create text, Wi-Fi and contact QR codes, or read QR images locally.','Generators',['qr','qrcode','wifi','contact','image','decode','generator'],{new:true}),
+  tool('website-launch-kit','Website Launch Kit','Create a complete set of site metadata, crawler rules, sitemap and app icons.','Developer',['website','seo','launch','meta','robots','sitemap','favicon','pwa'],{new:true}),
+  tool('meta-tag-generator','Meta & Social Tags','Inspect pasted HTML and generate consistent SEO, Open Graph and social metadata.','Developer',['seo','meta','opengraph','social','html','nextjs','twitter'],{new:true}),
+  tool('robots-txt-generator','Robots.txt & Sitemap','Draft crawler rules, test paths and build a sitemap from your own URL list.','Developer',['seo','robots','crawler','sitemap','indexing'],{new:true}),
+  tool('favicon-generator','Favicon & App Icon Generator','Export real multi-size ICO, PNG, SVG, Apple and maskable icons in one pack.','Design',['favicon','icon','logo','pwa','manifest','image','apple'],{new:true}),
+  tool('calculation-notebook','Private Calculation Notebook','Calculate with decimal arithmetic, variables and units; save or share an encrypted notebook.','Calculators',['calculator','math','units','notebook','variables','percent','private'],{new:true}),
+  tool('everyday-calculators','Everyday Calculators','Compare prices and percentages, split bills exactly, or count dates and working days.','Calculators',['calculator','percentage','price','bill','tip','date','days','discount'],{new:true}),
+  tool('finance-calculator','Loan & Savings Calculator','Compare fixed-rate repayments and extra payments, or model monthly savings.','Calculators',['calculator','finance','loan','emi','mortgage','savings','interest','amortization'],{new:true}),
+  tool('subnet-calculator','IPv4 Subnet Planner','Inspect CIDR ranges, split networks and find overlapping internal subnets locally.','Developer',['calculator','subnet','cidr','ipv4','ip','network','private'],{new:true}),
+  tool('css-playground','CSS Playground','Build gradients, responsive named grids and shadows with live previews.','Design',['css','gradient','grid','shadow','layout','color','design'],{new:true}),
+  tool('svg-toolkit','SVG Preparation Toolkit','Clean static SVG, repair dimensions, prefix IDs and export SVG, React or PNG.','Design',['svg','vector','optimize','jsx','react','icon','clean','metadata'],{new:true}),
+  tool('encrypted-notes','Offline Encrypted Notes','Write, review and encrypt a portable note that can be unlocked offline.','Privacy & Security',['note','encrypt','private','password','markdown','sharing','offline'],{new:true}),
+  tool('bash-generator','Bash Script Builder','Generate reviewable scripts with argument parsing, quoted paths and dry-run defaults.','Developer',['bash','shell','script','terminal','backup','posix','boilerplate'],{new:true}),
+  tool('ascii-art','ASCII Art & Text Banners','Turn local images into character art or create compact terminal and README banners.','Images',['ascii','art','banner','figlet','terminal','readme','image','text'],{new:true}),
 ];
 
 export const TOOL_BY_SLUG = new Map(TOOLS.map(item => [item.slug, item]));

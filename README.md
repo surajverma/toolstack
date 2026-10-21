@@ -9,11 +9,36 @@ ToolStack is an open-source collection of utilities designed around a strict loc
 - Tool input is processed locally in the browser.
 - No account is required.
 - No advertising or analytics SDK is included.
+- Appearance and explicitly pinned tool IDs are stored as local preferences when browser storage is available; working input is not saved with them.
 - Source code under `src/` is checked for direct network-capable APIs by `npm run privacy-check`.
 - Runtime libraries are bundled with the application rather than loaded from third-party CDNs.
 - Tools that fundamentally require transmitting user input to a third party are intentionally excluded from the core collection.
 
 ## Highlights
+
+### Calculators, design and launch tools
+
+The directory now contains 60 tools. The newer tools share tested processing modules and a small set of interface components; see [the architecture guide](docs/architecture.md).
+
+| Tool | Useful details |
+| --- | --- |
+| Website Launch Kit | One ZIP with consistent metadata, icons, manifest, robots rules and a supplied-URL sitemap. |
+| Meta Tag Generator | Escaped HTML and typed Next.js output, inert HTML inspection, duplicate warnings and a local social-image preview. Published image URLs are never fetched. |
+| Robots.txt Generator | Crawler-group and path simulation with the winning rule, wildcard support and a same-origin sitemap generator. |
+| Favicon Generator | Images, cleaned SVG, monograms or emoji; real multi-size ICO, PNG, SVG, Apple touch and maskable icons with matching manifest and link tags. |
+| Calculation Notebook | Named variables, forward references, decimal arithmetic, percentages and compatible units. Save JSON or encrypted files; export a structure with numeric literals and comments removed. Variable names and units remain visible. |
+| Everyday Calculators | Percentage change, unit prices, exact cent allocation for split bills, and date/working-day differences with supplied holidays. |
+| Finance Calculator | Loan amortization with extra payments and savings projections, with readable schedules and CSV exports. Nominal rates, monthly compounding, payment rounding and contribution timing are shown; taxes and fees are excluded. |
+| Subnet Calculator | IPv4 CIDR details including /31 and /32, subnet splitting, and overlap detection. No network requests or scans. |
+| CSS Playground | Multi-stop gradients, sampled contrast estimates, linear sRGB PNG export, rectangular named grid areas with responsive CSS/HTML, and box shadows. |
+| SVG Toolkit | Static SVG cleanup, local reference/ID rewriting, viewBox repair, currentColor conversion, React output and PNG export. Unsupported active content and external references are removed with a change list. |
+| Encrypted Notes | Portable text or Markdown notes encrypted with AES-256-GCM and PBKDF2-SHA256 (600,000 iterations), random salts and nonces. The title is encrypted too. |
+| Bash Script Generator | Quoted, editable Bash templates for file reports, backups and argument handling, plus a POSIX skeleton. Dry run is the default; scripts are never executed here. |
+| ASCII Art Generator | Bundled text glyphs and local image conversion with custom character ramps, inversion and optional dithering. Text, standalone HTML and PNG exports. |
+
+Encrypted notes are files, not a hosted messaging service. Share the passphrase separately. Offline copies cannot enforce expiry, revocation or one-time access. Notes, passphrases and calculation inputs remain in tab memory until an explicit download; the encrypted-note format is versioned and size-limited. This implementation has automated tamper and round-trip tests, but has not had an independent cryptographic audit.
+
+The calculation notebook uses a restricted parser, not JavaScript evaluation. Currency units are labels without exchange rates. SVG cleanup intentionally supports a static subset; review its changes before replacing an original illustration. The favicon pack's SVG embeds a PNG to match the other icon formats; the SVG toolkit preserves supported vector paths. Generated shell scripts target the dependencies displayed in the tool and should be reviewed before running on your own machine.
 
 ### PDF & Documents
 - PDF Toolkit: compress PDFs, merge and reorder merge inputs, remove accidental uploads, select which loaded PDF to edit, extract/reorder/delete/rotate pages, split every page to ZIP, edit basic metadata and turn images into a PDF.
@@ -58,9 +83,17 @@ Text Statistics / Analyzer, Find & Replace, List Cleaner & Formatter, Text Contr
 
 ## Offline / PWA behavior
 
-ToolStack registers a same-origin service worker in production. The home page, offline fallback and ToolStack's own static assets are cached, and successfully visited tool pages can be reopened from the cache when offline.
+ToolStack is installable as a standalone PWA. Use **Install app** in the footer or your browser's install menu. On iPhone / iPad, use Safari's Share → Add to Home Screen.
 
-User-selected files, generated files and tool input are **not** deliberately placed into the service-worker cache. Bundled PDF.js and qpdf runtime assets are cached after successful use, alongside application chunks.
+Keep the app open online until the footer says **Offline ready**. Its service worker downloads every prerendered page, navigation payload, application chunk, font, worker and bundled PDF.js / qpdf runtime, including lazily loaded code. All registered tools can then be opened and used without an Internet connection, even if never previously visited. First setup requires a download (roughly 20–25 MB before transfer compression); installation itself is optional for offline use.
+
+User-selected files, generated files and tool input are **not** placed in this cache. Only an explicit build-generated allowlist of application resources is saved. Requests to other origins, uploads and arbitrary data are not cached. Interrupted downloads show **Retry download**, and readiness is checked again when the app starts. Browser storage can be cleared or evicted; reconnect and download again if that happens. The app requests persistent storage after a supported native installation is accepted; the browser decides whether to grant it.
+
+New versions download in the background and offer **Reload to update**. Save or download your working output before choosing it. Updates do not automatically reload a working tab. One previous asset cache is retained for tabs using an older build.
+
+Offline support runs only in production over HTTPS (or localhost). Development deliberately unregisters ToolStack's worker and clears its application caches to avoid stale development assets. Run `npm run build` (including its postbuild step), then `npm start` to test it. The postbuild script generates `public/pwa/sw.js` and versioned page / navigation snapshots from the actual Next build; generated files are ignored by Git and must be included in deployment output. It fails if any page is missing from the static offline bundle. `/sw.js` imports the generated worker and remains stable for existing installations. Do not deploy using a bare `next build` command that skips the postbuild step.
+
+App icons and generation prompts are in [design/app-icons](design/app-icons/README.md); the selected dark TS monogram is exported to install, maskable, Apple touch and favicon sizes in `public/icons/`.
 
 ## Development
 
@@ -88,7 +121,7 @@ Before submitting a change:
 npm run verify
 ```
 
-`verify` runs the privacy check, ESLint, TypeScript checking, Vitest unit tests and a production build.
+`verify` runs the production dependency audit, privacy check, ESLint, TypeScript checking, Vitest unit tests and a production build.
 
 ## Security and privacy notes
 
