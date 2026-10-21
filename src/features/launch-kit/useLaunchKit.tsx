@@ -14,22 +14,27 @@ import {
   type IconDesign,
 } from './icons';
 import {
-  DEFAULT_SITE,
   inspectMetadata,
   metadataOutput,
   sitemapXml,
   type SiteMetadata,
 } from './metadata';
-import { defaultRobots, parseRobots, testRobots } from './robots';
+import { parseRobots, testRobots } from './robots';
+import {
+  allowProjectCrawling,
+  createLaunchProject,
+  editProjectRobots,
+  updateProjectSite,
+} from './project';
 
 export type LaunchTab = 'project' | 'metadata' | 'robots' | 'icons' | 'export';
 export function useLaunchKit(initialTab: LaunchTab) {
   const hydrated = useHydrated();
   const [tab, setTab] = useState<LaunchTab>(initialTab);
-  const [site, setSite] = useState<SiteMetadata>(DEFAULT_SITE);
+  const [project, setProject] = useState(createLaunchProject);
+  const { site, robots } = project;
   const [html, setHtml] = useState('');
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
-  const [robots, setRobots] = useState(defaultRobots(DEFAULT_SITE.url));
   const [testPath, setTestPath] = useState('/');
   const [agent, setAgent] = useState('Googlebot');
   const [paths, setPaths] = useState('/\n/about\n/contact');
@@ -84,7 +89,17 @@ export function useLaunchKit(initialTab: LaunchTab) {
     key: K,
     value: SiteMetadata[K],
   ) {
-    setSite((current) => ({ ...current, [key]: value }));
+    updateSite({ [key]: value });
+  }
+  function updateSite(changes: Partial<SiteMetadata>) {
+    setProject((current) => updateProjectSite(current, changes));
+  }
+  function setRobots(source: string) {
+    setProject((current) => editProjectRobots(current, source));
+  }
+  function allowCrawling() {
+    // Validate in the event handler so the preset's existing error message applies.
+    setProject(allowProjectCrawling(project));
   }
   function field(
     key: Exclude<keyof SiteMetadata, 'noindex'>,
@@ -225,12 +240,11 @@ export function useLaunchKit(initialTab: LaunchTab) {
     try {
       const imported = inspectMetadata(html);
       setImportWarnings(imported.warnings);
-      setSite((current) => ({
-        ...current,
-        ...Object.fromEntries(
+      updateSite(
+        Object.fromEntries(
           Object.entries(imported.values).filter(([, value]) => value !== ''),
         ),
-      }));
+      );
       setStatus(
         'Metadata imported locally. No external page or image was requested.',
       );
@@ -246,6 +260,7 @@ export function useLaunchKit(initialTab: LaunchTab) {
     setHtml,
     robots,
     setRobots,
+    allowCrawling,
     testPath,
     setTestPath,
     agent,

@@ -163,7 +163,10 @@ export function testRobots(source: string, agent: string, input: string) {
   };
 }
 
+export function defaultSitemap(base: string) {
+  return `${new URL(base).origin}/sitemap.xml`;
+}
+
 export function defaultRobots(base: string) {
-  const origin = new URL(base).origin;
-  return `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`;
+  return `User-agent: *\nAllow: /\n\nSitemap: ${defaultSitemap(base)}\n`;
 }

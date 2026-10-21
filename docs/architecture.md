@@ -30,4 +30,4 @@ The privacy check guards direct network APIs in `src/`; it is a useful regressio
 
 `npm run build` runs Next's production build, then `scripts/build-pwa.mjs`. The postbuild step enumerates prerendered pages, navigation payloads and static assets, adds bundled runtimes, and produces versioned snapshots plus the worker in ignored `public/pwa/`. `/sw.js` is the stable loader. Deploy the postbuild output alongside the Next build.
 
-The worker caches only this generated application-resource allowlist. It never stores tool inputs or arbitrary requests. A ready marker is written only after the entire download succeeds. Updates offer a user-controlled reload, and one previous asset version remains available for already-open tabs.
+The worker caches only this generated application-resource allowlist. It never stores tool inputs or arbitrary requests. A ready marker is written only after the entire download succeeds. Updates offer a user-controlled reload, and the most recent completed previous cache remains available for already-open tabs. Failed installations are excluded from retention.

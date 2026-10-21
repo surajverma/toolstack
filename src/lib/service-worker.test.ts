@@ -13,11 +13,12 @@ const entries = [
   { url: '/qpdf/qpdf.wasm', key: '/qpdf/qpdf.wasm', type: 'asset' },
 ];
 const config = { version: 'test', entries, pages: ['/', '/unused-tool', '/offline'], bytes: 100 };
-const workerSource = readFileSync(new URL('../../scripts/service-worker.js', import.meta.url),'utf8').replace('/* TOOLSTACK_PRECACHE */ null', JSON.stringify(config));
+const workerTemplate = readFileSync(new URL('../../scripts/service-worker.js', import.meta.url),'utf8');
+const workerSource = workerTemplate.replace('/* TOOLSTACK_PRECACHE */ null', JSON.stringify(config));
+const readyMarker = '/__toolstack-offline-ready';
 
 type WorkerEvent = { request?: Request & { destination: string }; data?: { type: string }; source?: { url: string; postMessage: ReturnType<typeof vi.fn> }; waitUntil(value: Promise<unknown>): void; respondWith(value: Promise<Response>): void };
-function setup() {
-  const stores = new Map<string, Map<string, Response>>();
+function setup(version = config.version, stores = new Map<string, Map<string, Response>>()) {
   function store(name: string) {
     if (!stores.has(name)) stores.set(name, new Map());
     const data = stores.get(name)!;
@@ -34,7 +35,8 @@ function setup() {
   const client = { url: origin + '/', postMessage: vi.fn() };
   const network = vi.fn(async (input: RequestInfo | URL) => new Response('resource:' + (typeof input === 'string' ? input : String(input)), { headers: { 'content-type': 'text/javascript' } }));
   const skipWaiting = vi.fn(async () => undefined);
-  runInNewContext(workerSource, { URL, Response, Headers, fetch: network, caches, self: {
+  const source = workerTemplate.replace('/* TOOLSTACK_PRECACHE */ null', JSON.stringify({ ...config, version }));
+  runInNewContext(source, { URL, Response, Headers, fetch: network, caches, self: {
     location: { origin }, clients: { matchAll: async () => [client], claim: vi.fn() }, skipWaiting,
     addEventListener: (type: string, handler: (event: WorkerEvent) => void) => { handlers[type] = handler; },
   } });
@@ -111,12 +113,41 @@ describe('complete offline installation', () => {
     await app.store('other-app').put('/data', new Response('leave alone'));
     await app.store('toolstack-v5').put('/', new Response('legacy'));
     await app.store('toolstack-pwa-older').put('/', new Response('older'));
+    await app.store('toolstack-pwa-older').put(readyMarker, new Response('older'));
     await app.store('toolstack-pwa-previous').put('/_next/static/old.js', new Response('old chunk'));
+    await app.store('toolstack-pwa-previous').put(readyMarker, new Response('previous'));
     await app.dispatch('install');
     await app.dispatch('activate');
     expect([...app.stores.keys()]).toEqual(['other-app', 'toolstack-pwa-previous', 'toolstack-pwa-test']);
     app.network.mockRejectedValue(new Error('Offline'));
     expect(await (await app.request('/_next/static/old.js'))?.text()).toBe('old chunk');
+  });
+
+  it('retains completed A after B fails installation and C activates', async () => {
+    const a = setup('a');
+    await a.dispatch('install');
+    await a.dispatch('activate');
+    await a.store('toolstack-pwa-a').put('/_next/static/a-lazy.js', new Response('A lazy chunk'));
+
+    const b = setup('b', a.stores);
+    b.network.mockImplementation(async input => new Response(String(input), { status: String(input).includes('wasm') ? 503 : 200 }));
+    await expect(b.dispatch('install')).rejects.toThrow('Offline download incomplete');
+    expect(await b.store('toolstack-pwa-b').match(readyMarker)).toBeUndefined();
+
+    const c = setup('c', a.stores);
+    await c.dispatch('install');
+    await c.dispatch('activate');
+    expect([...c.stores.keys()]).toEqual(['toolstack-pwa-a', 'toolstack-pwa-c']);
+    c.network.mockRejectedValue(new Error('Offline'));
+    expect(await (await c.request('/_next/static/a-lazy.js'))?.text()).toBe('A lazy chunk');
+  });
+
+  it('removes incomplete caches when there is no completed previous build', async () => {
+    const app = setup();
+    await app.store('toolstack-pwa-partial').put('/_next/static/partial.js', new Response('partial'));
+    await app.dispatch('install');
+    await app.dispatch('activate');
+    expect([...app.stores.keys()]).toEqual(['toolstack-pwa-test']);
   });
 
   it('accepts manual activation messages only from a same-origin client', async () => {

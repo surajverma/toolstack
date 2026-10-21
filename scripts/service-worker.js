@@ -58,8 +58,12 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    // Retain one previous build for tabs still using its content-hashed chunks.
-    const previous = keys.filter(key => key.startsWith('toolstack-pwa-') && key !== CACHE).at(-1);
+    // A failed installation may be newer than the last working build. Only a
+    // completed cache can support lazy imports in tabs on that previous build.
+    let previous;
+    for (const key of keys.filter(key => key.startsWith('toolstack-pwa-') && key !== CACHE).reverse()) {
+      if (await (await caches.open(key)).match(META)) { previous = key; break; }
+    }
     await Promise.all(keys.filter(key => /^toolstack-(pwa-|v\d+$)/.test(key) && key !== CACHE && key !== previous).map(key => caches.delete(key)));
     await self.clients.claim();
   })());

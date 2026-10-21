@@ -5,13 +5,13 @@ import {
   Field,
 } from '@/components/workbench/Workbench';
 import { downloadLocal } from '@/lib/local-files';
-import { defaultRobots } from './robots';
 
 export default function RobotsPanel({ kit }: { kit: LaunchKitState }) {
   const {
     site,
     robots,
     setRobots,
+    allowCrawling,
     testPath,
     setTestPath,
     agent,
@@ -32,7 +32,7 @@ export default function RobotsPanel({ kit }: { kit: LaunchKitState }) {
             className="action action-secondary"
             onClick={() => {
               try {
-                setRobots(defaultRobots(site.url));
+                allowCrawling();
                 setError('');
               } catch {
                 setError('Enter a valid project URL.');
