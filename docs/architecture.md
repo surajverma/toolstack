@@ -31,3 +31,7 @@ The privacy check guards direct network APIs in `src/`; it is a useful regressio
 `npm run build` runs Next's production build, then `scripts/build-pwa.mjs`. The postbuild step enumerates prerendered pages, navigation payloads and static assets, adds bundled runtimes, and produces versioned snapshots plus the worker in ignored `public/pwa/`. `/sw.js` is the stable loader. Deploy the postbuild output alongside the Next build.
 
 The worker caches only this generated application-resource allowlist. It never stores tool inputs or arbitrary requests. A ready marker is written only after the entire download succeeds. Updates offer a user-controlled reload, and the most recent completed previous cache remains available for already-open tabs. Failed installations are excluded from retention.
+
+Installation events live in `src/hooks/usePwaInstall.ts`; service-worker registration and readiness live in `PwaProvider`; footer actions live in `PwaControls`. Installation is offered only after a full download and a native browser offer. Readiness remains internal so the footer shows only installation, recovery or explicit update actions.
+
+The PDF asset preparation script copies the unmodified qpdf-run worker and bundled runtimes. PDF compression supplies absolute same-origin HTTP(S) asset URLs through the library's supported options; it does not rewrite dependency source or rely on bundler-specific `import.meta.url` resolution.

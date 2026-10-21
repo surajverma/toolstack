@@ -24,6 +24,8 @@ const contentSecurityPolicy = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  // Containers use Next's minimal server; cPanel keeps its existing startup path.
+  ...(process.env.TOOLSTACK_STANDALONE === '1' ? { output: 'standalone' as const } : {}),
   async headers() {
     return [{
       source: '/(.*)',

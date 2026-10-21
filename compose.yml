@@ -1,0 +1,9 @@
+services:
+  toolstack:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: http://localhost:5010
+    ports:
+      - "5010:5010"
+    restart: unless-stopped

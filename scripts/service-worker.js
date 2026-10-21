@@ -24,8 +24,11 @@ function prepareOffline() {
       while (next < CONFIG.entries.length) {
         const entry = CONFIG.entries[next++];
         if (!(await cache.match(entry.key))) {
-          const response = await fetch(entry.url, { cache: 'reload', credentials: 'same-origin' });
-          if (!response.ok || response.redirected) throw new Error('Offline resource unavailable');
+          let response;
+          try { response = await fetch(entry.url, { cache: 'reload', credentials: 'same-origin' }); }
+          catch { throw new Error(`Could not download ${entry.url} (network error)`); }
+          if (!response.ok || response.redirected) throw new Error(`Could not download ${entry.url} (HTTP ${response.status}${response.redirected ? ', redirected' : ''})`);
+          if (entry.type !== 'page' && response.headers.get('content-type')?.includes('text/html')) throw new Error(`Could not download ${entry.url} (received HTML instead of an app resource)`);
           const headers = new Headers(response.headers);
           headers.delete('content-encoding'); headers.delete('content-length'); headers.delete('vary');
           if (entry.type === 'flight') headers.set('content-type', 'text/x-component');
@@ -39,11 +42,12 @@ function prepareOffline() {
         }
       }
     }));
-    if (results.some(result => result.status === 'rejected')) throw new Error('Offline download incomplete');
+    const failures = results.filter(result => result.status === 'rejected');
+    if (failures.length) throw new Error('Offline download incomplete: ' + failures.map(result => result.reason?.message || String(result.reason)).join('; '));
     await cache.put(META, new Response(CONFIG.version));
     await announce({ state: 'ready', completed, total: CONFIG.entries.length });
   })().catch(async error => {
-    await announce({ state: 'error' });
+    await announce({ state: 'error', detail: error?.message || String(error) });
     throw error;
   }).finally(() => { preparing = undefined; });
   return preparing;
